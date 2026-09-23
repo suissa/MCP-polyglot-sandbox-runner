@@ -1,0 +1,17 @@
+services:
+  js-runner:
+    build: .
+    container_name: js-ts-sandbox
+    runtime: runsc
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+    # Mapeia host.docker.internal para o IP de gateway do host no Linux
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    # Opcional: limites de recursos adicionais de segurança
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 1024M

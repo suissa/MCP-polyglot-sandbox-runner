@@ -1,0 +1,33 @@
+{
+  "name": "@allascode/sandbox-runner",
+  "version": "1.0.0",
+  "description": "Standardized MCP Sandbox Runner with Docker and gVisor isolation",
+  "main": "src/index.ts",
+  "type": "module",
+  "scripts": {
+    "start": "node mcp/server.mjs",
+    "start:network": "node mcp/server.mjs --network",
+    "start:sdk": "tsx src/index.ts",
+    "test": "node --test test/*.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "mcp",
+    "sandbox",
+    "gvisor",
+    "docker",
+    "security",
+    "runner"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.2",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  }
+}

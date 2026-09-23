@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "sandboxrunner": {
+      "command": "node",
+      "args": ["./mcp/server.mjs"]
+    }
+  }
+}

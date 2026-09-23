@@ -1,0 +1,31 @@
+module:
+  id: sandboxrunner
+  name: SandboxRunner
+  capabilities:
+    - sandbox-execution
+    - gvisor-isolation
+    - code-runner
+    - artifact-processing
+    - multi-language-runtime
+    - resource-limits
+  api:
+    status: implemented
+    evidence: src/sandbox-runner.ts
+
+mcp:
+  transports:
+    stdio:
+      enabled: true
+    rest:
+      enabled: true
+      host: 127.0.0.1
+      port: 7631
+    websocket:
+      enabled: true
+      host: 127.0.0.1
+      port: 7632
+    nats:
+      enabled: true
+      url: "nats://127.0.0.1:60001"
+      subject: sandboxrunner.rpc
+      queue: sandboxrunner
