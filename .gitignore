@@ -3,3 +3,12 @@ node_modules/
 .sandbox_tmp/
 dist/
 *.log
+
+# Lockfiles
+bun.lock
+bun.lockb
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+*.lock
+*lock*
