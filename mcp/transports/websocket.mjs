@@ -60,7 +60,7 @@ export function webSocketTransport({ host, port, path = '/' }) {
           send(socket, { jsonrpc: '2.0', id: null, error: { code: -32700, message: cause.message } });
           continue;
         }
-        const response = await dispatch(request);
+        const response = await dispatch(request, { transport: 'websocket' });
         if (response) send(socket, response);
       }
     });

@@ -4,7 +4,7 @@
  *
  * Everything-as-Code: no id, name, capability, host, port or NATS subject is
  * a literal in this file — everything comes from this module's own
- * `configs/core.yml`, read exclusively via packages/Tools/UbiQonfig.
+ * `configs/core.yml`, read via mcp/config.mjs.
  *
  * Every dispatched JSON-RPC method ("route", e.g. `tools/call`) is also
  * emitted as a local event and published as a NATS event, with the same
@@ -14,7 +14,7 @@ import { EventEmitter } from 'node:events';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import readline from 'node:readline';
-import { loadYaml, loadJson, loadEnv } from '../../../../../Tools/UbiQonfig/src/index.js';
+import { loadYaml, loadJson, loadEnv } from './config.mjs';
 import { restTransport } from './transports/rest.mjs';
 import { webSocketTransport } from './transports/websocket.mjs';
 import { natsTransport } from './transports/nats.mjs';
@@ -24,6 +24,20 @@ import {
   runWithArtifacts,
   SUPPORTED_LANGUAGES,
 } from './engine.mjs';
+import {
+  RESULT_SCHEMA,
+  buildIndex,
+  createResult,
+  deriveStatus,
+  exec,
+  finishResult,
+  listBoxes,
+  loadBox,
+  pushFiles,
+  runEntry,
+  runSetup,
+} from './codebox.mjs';
+import { CHANNELS, deliver, normalizeChannel, resolveTarget } from './delivery.mjs';
 
 const moduleDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const networkMode = process.argv.includes('--network') || process.env.MCP_NETWORK === '1';
@@ -32,7 +46,7 @@ export const events = new EventEmitter();
 
 /* ------------------------------------------------------------------ *
  * Config: read only this module's own configs/core.yml (+ optional      *
- * core.local.json overlay / .env), via UbiQonfig only.                  *
+ * core.local.json overlay / .env) via mcp/config.mjs.                 *
  * ------------------------------------------------------------------ */
 
 const module_ = loadModuleConfig(moduleDir);
@@ -104,6 +118,244 @@ function resolveScalar(value) {
   }
   if (value && typeof value === 'object') resolveEnvPlaceholders(value);
   return value;
+}
+
+/* ------------------------------------------------------------------ *
+ * Codebox tools (boxes rendered by `./codebox up <alias>`)             *
+ * ------------------------------------------------------------------ */
+
+const REPO_ROOT = moduleDir;
+const ERROR_STATUSES = new Set(['error', 'rejected', 'path_required', 'not_found', 'invalid_request']);
+let stdioWrite = null;
+
+const responseProperties = {
+  response_channel: {
+    type: 'string',
+    enum: CHANNELS,
+    description: 'Deliver the result on this channel instead of replying on the incoming one (the call then returns status "accepted").',
+  },
+  response_path: {
+    type: 'string',
+    description: 'Where to deliver: URL (rest), ws:// URL (websocket), subject or nats://host:port/subject (nats), JSON-RPC method (stdio).',
+  },
+  request_id: { type: 'string', description: 'Optional id echoed in the result document.' },
+};
+
+const fileItemSchema = {
+  type: 'object',
+  properties: {
+    path: { type: 'string', description: 'Path inside codes/. When present the file is simply overwritten/created there.' },
+    name: { type: 'string', description: 'Bare file name, used when "path" is absent: resolved through the unique-name index.' },
+    content: { type: 'string' },
+    encoding: { type: 'string', enum: ['utf-8', 'base64'] },
+  },
+  required: ['content'],
+};
+
+const runProperties = {
+  entry: { type: 'string', description: 'File to run: path inside codes/ or a unique file name.' },
+  args: { type: 'array', items: { type: 'string' } },
+  timeout_ms: { type: 'number', description: 'Program timeout (default: box timeout_ms).' },
+};
+
+/**
+ * Runs `work(result)` and returns the codebox.result/v1 document — or, when
+ * the payload asks for another response channel, returns "accepted" at once
+ * and delivers the document there when the work finishes.
+ */
+async function codeboxTool(tool, args, ctx, work) {
+  const receivedVia = ctx?.transport || 'stdio';
+  const wantsOtherChannel =
+    args.response_channel && !(normalizeChannel(args.response_channel) === receivedVia && !args.response_path);
+  const target = wantsOtherChannel
+    ? resolveTarget({
+        channel: args.response_channel,
+        path: args.response_path,
+        defaults: { natsSubject: `${module_.id}.codebox.results` },
+      })
+    : null;
+  const result = createResult({
+    tool,
+    box: args.box,
+    requestId: args.request_id,
+    receivedVia,
+    responseChannel: target?.channel,
+    responsePath: target?.path,
+  });
+  const run = async () => {
+    try {
+      await work(result);
+    } catch (err) {
+      result.status = err.status || 'error';
+      result.errors.push({ message: err.message, ...(err.details || {}) });
+      if (err.details?.rejected) result.files.rejected = err.details.rejected;
+    }
+    result.status = deriveStatus(result);
+    return finishResult(result);
+  };
+  if (!target) return run();
+
+  setImmediate(async () => {
+    const final = await run();
+    final.channel.delivered = true;
+    try {
+      await deliver({
+        channel: target.channel,
+        path: target.path,
+        payload: final,
+        stdioWrite,
+        natsUrl: module_.transports.nats.url,
+      });
+    } catch (err) {
+      process.stderr.write(`${module_.id}: delivery to ${target.channel}:${target.path} failed: ${err.message}\n`);
+      final.channel.delivered = false;
+      final.channel.delivery_error = err.message;
+      natsHandle?.publish(`${module_.id}.codebox.delivery_failed`, final);
+    }
+    events.emit('codebox.result', final);
+  });
+  return { ...result, status: 'accepted' };
+}
+
+function codeboxToolDefinitions() {
+  return [
+    {
+      name: 'codebox_boxes',
+      description: 'List the rendered codebox boxes (boxes/<alias>) and their languages.',
+      inputSchema: { type: 'object', properties: {}, additionalProperties: false },
+      handler: () => ({ boxes: listBoxes() }),
+    },
+    {
+      name: 'codebox_up',
+      description: 'Run `./codebox up <alias>`: render boxes/<alias> from configs/codebox.yml and `docker compose up -d` it.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          box: { type: 'string', description: 'Box alias from configs/codebox.yml' },
+          force: { type: 'boolean', description: 'Overwrite existing init codes' },
+          setup: { type: 'boolean', description: 'Run setup after the container is up' },
+          timeout_ms: { type: 'number', description: 'Default 30 min (image builds are slow)' },
+          ...responseProperties,
+        },
+        required: ['box'],
+      },
+      handler: (args, ctx) =>
+        codeboxTool('codebox_up', args, ctx, async (result) => {
+          const cli = ['up', args.box, ...(args.force ? ['--force'] : []), ...(args.setup ? ['--setup'] : [])];
+          const res = await exec(path.join(REPO_ROOT, 'codebox'), cli, {
+            cwd: REPO_ROOT,
+            timeoutMs: args.timeout_ms || 30 * 60 * 1000,
+          });
+          result.execution = {
+            command: ['./codebox', ...cli],
+            exit_code: res.exitCode,
+            timed_out: res.timedOut,
+            wall_ms: res.durationMs,
+            stdout: res.stdout.slice(-20000),
+            stderr: (res.stderr || res.error || '').slice(-20000),
+          };
+          if (res.exitCode === 0) result.index = buildIndex(loadBox(args.box));
+        }),
+    },
+    {
+      name: 'codebox_index',
+      description: 'Unique-name index of codes/ (name → path) plus names that are duplicated (those need "path").',
+      inputSchema: {
+        type: 'object',
+        properties: { box: { type: 'string' } },
+        required: ['box'],
+      },
+      handler: (args, ctx) =>
+        codeboxTool('codebox_index', args, ctx, async (result) => {
+          result.index = buildIndex(loadBox(args.box));
+        }),
+    },
+    {
+      name: 'codebox_push',
+      description:
+        'Send new or changed code files to a box. With "path" the file is overwritten there; without it the "name" ' +
+        'is looked up in the unique-name index (overwrite), created at codes/<name> when unknown, and the request is ' +
+        'rejected with status "path_required" when the name exists more than once. Optionally runs setup and/or ' +
+        'one file afterwards and returns every metric collected.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          box: { type: 'string' },
+          files: { type: 'array', items: fileItemSchema },
+          setup: { type: 'boolean', description: 'Run setup (preflight → install → build → test) after writing' },
+          run: {
+            type: 'object',
+            properties: runProperties,
+            description: 'Run a file after writing (entry defaults to the single pushed file).',
+          },
+          ...responseProperties,
+        },
+        required: ['box', 'files'],
+      },
+      handler: (args, ctx) =>
+        codeboxTool('codebox_push', args, ctx, async (result) => {
+          const box = loadBox(args.box);
+          const pushed = pushFiles(box, args.files);
+          result.files.written = pushed.written;
+          result.index = pushed.index;
+          if (args.setup) {
+            result.setup = await runSetup(box);
+            if (result.setup.status !== 'ok') return;
+          }
+          if (args.run) {
+            const entry = args.run.entry || (pushed.written.length === 1 ? pushed.written[0].path : null);
+            if (!entry) throw Object.assign(new Error('run.entry is required when pushing more than one file'), { status: 'invalid_request' });
+            Object.assign(result, await runEntry(box, entry, { args: args.run.args || [], timeoutMs: args.run.timeout_ms }));
+          }
+        }),
+    },
+    {
+      name: 'codebox_setup',
+      description: 'Run setup in a box: detect languages by extension, preflight (syntax/toolchain), install, build, test.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          box: { type: 'string' },
+          no_test: { type: 'boolean' },
+          timeout_ms: { type: 'number' },
+          ...responseProperties,
+        },
+        required: ['box'],
+      },
+      handler: (args, ctx) =>
+        codeboxTool('codebox_setup', args, ctx, async (result) => {
+          result.setup = await runSetup(loadBox(args.box), {
+            args: args.no_test ? ['--no-test'] : [],
+            ...(args.timeout_ms ? { timeoutMs: args.timeout_ms } : {}),
+          });
+        }),
+    },
+    {
+      name: 'codebox_run',
+      description:
+        'Run one file (ts, py, go, rs, zig) through its OpenTelemetry runner inside the box (the code only runs via ' +
+        'spawn) and return stdout/stderr, telemetry spans+metrics, rusage, ps/top/cgroup samples and docker stats.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          box: { type: 'string' },
+          ...runProperties,
+          setup: { type: 'boolean', description: 'Run setup first; the file only runs if setup succeeds' },
+          ...responseProperties,
+        },
+        required: ['box', 'entry'],
+      },
+      handler: (args, ctx) =>
+        codeboxTool('codebox_run', args, ctx, async (result) => {
+          const box = loadBox(args.box);
+          if (args.setup) {
+            result.setup = await runSetup(box);
+            if (result.setup.status !== 'ok') return;
+          }
+          Object.assign(result, await runEntry(box, args.entry, { args: args.args || [], timeoutMs: args.timeout_ms }));
+        }),
+    },
+  ];
 }
 
 /* ------------------------------------------------------------------ *
@@ -229,6 +481,7 @@ const toolDefinitions = [
       return runWithArtifacts(args.command, args.inputFiles || [], args);
     },
   },
+  ...codeboxToolDefinitions(),
   // Aliases for standard AI agent tool calls
   {
     name: 'sandbox_execute_code',
@@ -367,8 +620,8 @@ const error = (id, code, message) => ({ jsonrpc: '2.0', id, error: { code, messa
 
 let natsHandle = null;
 
-async function dispatch(request) {
-  const response = await route(request);
+async function dispatch(request, ctx = { transport: 'stdio' }) {
+  const response = await route(request, ctx);
   if (request?.method) {
     const eventName = request.method.replace(/\//g, '.');
     const payload = { module: module_.id, method: request.method, request, response };
@@ -378,7 +631,7 @@ async function dispatch(request) {
   return response;
 }
 
-async function route(request) {
+async function route(request, ctx) {
   if (request.method === 'initialize') {
     return result(request.id, {
       protocolVersion: request.params?.protocolVersion || '2024-11-05',
@@ -422,9 +675,10 @@ async function route(request) {
     const tool = toolDefinitions.find((item) => item.name === request.params?.name);
     if (!tool) return error(request.id, -32602, `Unknown tool: ${request.params?.name}`);
     try {
-      const data = await tool.handler(request.params?.arguments || {});
+      const data = await tool.handler(request.params?.arguments || {}, ctx);
       const text = JSON.stringify(data);
-      return result(request.id, { content: [{ type: 'text', text }], structuredContent: data });
+      const isError = data?.schema === RESULT_SCHEMA && ERROR_STATUSES.has(data.status);
+      return result(request.id, { ...(isError ? { isError } : {}), content: [{ type: 'text', text }], structuredContent: data });
     } catch (err) {
       return result(request.id, {
         isError: true,
@@ -494,11 +748,12 @@ process.on('SIGTERM', shutdown);
 // stdio: always on by default
 if (module_.transports.stdio.enabled) {
   const write = (message) => process.stdout.write(`${JSON.stringify(message)}\n`);
+  stdioWrite = write;
   const input = readline.createInterface({ input: process.stdin, crlfDelay: Infinity });
   for await (const line of input) {
     if (!line.trim()) continue;
     try {
-      const response = await dispatch(JSON.parse(line));
+      const response = await dispatch(JSON.parse(line), { transport: 'stdio' });
       if (response) write(response);
     } catch (cause) {
       write(error(null, -32700, cause instanceof Error ? cause.message : String(cause)));

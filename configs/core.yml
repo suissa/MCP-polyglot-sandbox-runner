@@ -8,6 +8,8 @@ module:
     - artifact-processing
     - multi-language-runtime
     - resource-limits
+    - codebox-boxes
+    - otel-telemetry
   api:
     status: implemented
     evidence: src/sandbox-runner.ts

@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# codebox-run — runs ONE file through the telemetry runner of its language.
+# The runner spawns the real code as a child process and writes a
+# codebox.telemetry/v1 document to $CODEBOX_TELEMETRY_OUT.
+#
+# Usage: codebox-run <file> [args...]
+set -euo pipefail
+[ $# -ge 1 ] || { echo "usage: codebox-run <file> [args...]" >&2; exit 64; }
+CODEBOX_HOME="${CODEBOX_HOME:-/opt/codebox}"
+file="$1"; shift
+
+case "${file##*.}" in
+  ts|tsx|mts|cts|js|mjs|cjs) exec node "$CODEBOX_HOME/runners/ts/dist/telemetry.js" "$file" "$@" ;;
+  py)  exec "${CODEBOX_PYTHON:-python3}" "$CODEBOX_HOME/runners/py/telemetry.py" "$file" "$@" ;;
+  go)  exec codebox-run-go "$file" "$@" ;;
+  rs)  exec codebox-run-rs "$file" "$@" ;;
+  zig) exec codebox-run-zig "$file" "$@" ;;
+  *) echo "codebox-run: unsupported extension: $file (ts, py, go, rs, zig)" >&2; exit 64 ;;
+esac

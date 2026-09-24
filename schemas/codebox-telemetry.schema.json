@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:codebox:telemetry:v1",
+  "title": "Codebox telemetry runner document",
+  "description": "Written by every language runner (codebox-run-ts|py|go|rs|zig) to $CODEBOX_TELEMETRY_OUT after spawning the real code as a child process.",
+  "type": "object",
+  "required": ["schema", "runner", "entry", "command", "process", "resources", "otel"],
+  "properties": {
+    "schema": { "const": "codebox.telemetry/v1" },
+    "runner": {
+      "type": "object",
+      "required": ["language", "name", "sdk", "sdk_version"],
+      "properties": {
+        "language": { "enum": ["typescript", "python", "go", "rust", "zig"] },
+        "name": { "type": "string" },
+        "sdk": { "type": "string" },
+        "sdk_version": { "type": "string" }
+      }
+    },
+    "run_id": { "type": ["string", "null"] },
+    "box": { "type": ["string", "null"] },
+    "entry": { "type": "string" },
+    "command": { "type": "array", "items": { "type": "string" } },
+    "compile": {
+      "description": "Compile step (go, rust, zig); null for interpreted languages.",
+      "type": ["object", "null"],
+      "required": ["command", "exit_code", "duration_ms"],
+      "properties": {
+        "command": { "type": "array", "items": { "type": "string" } },
+        "exit_code": { "type": "integer" },
+        "duration_ms": { "type": "number" },
+        "output": { "type": "string" }
+      }
+    },
+    "process": {
+      "type": "object",
+      "required": ["pid", "exit_code", "signal", "timed_out", "started_at", "ended_at", "duration_ms"],
+      "properties": {
+        "pid": { "type": ["integer", "null"] },
+        "exit_code": { "type": ["integer", "null"] },
+        "signal": { "type": ["string", "null"] },
+        "timed_out": { "type": "boolean" },
+        "spawn_error": { "type": ["string", "null"] },
+        "started_at": { "type": "string" },
+        "ended_at": { "type": "string" },
+        "duration_ms": { "type": "number" }
+      }
+    },
+    "resources": {
+      "description": "rusage of the spawned child (wait4 / RUSAGE_CHILDREN; /proc sampling for node). null when unavailable.",
+      "type": "object",
+      "properties": {
+        "user_cpu_ms": { "type": ["number", "null"] },
+        "system_cpu_ms": { "type": ["number", "null"] },
+        "max_rss_kb": { "type": ["number", "null"] },
+        "minor_page_faults": { "type": ["number", "null"] },
+        "major_page_faults": { "type": ["number", "null"] },
+        "voluntary_ctx_switches": { "type": ["number", "null"] },
+        "involuntary_ctx_switches": { "type": ["number", "null"] },
+        "fs_in_blocks": { "type": ["number", "null"] },
+        "fs_out_blocks": { "type": ["number", "null"] },
+        "threads": { "type": ["number", "null"] }
+      }
+    },
+    "otel": {
+      "type": "object",
+      "required": ["resource", "spans", "metrics"],
+      "properties": {
+        "resource": { "type": "object" },
+        "spans": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "trace_id", "span_id", "parent_span_id", "kind", "start_time_unix_nano", "end_time_unix_nano", "duration_ms", "status", "attributes"],
+            "properties": {
+              "name": { "type": "string" },
+              "trace_id": { "type": "string", "pattern": "^[0-9a-f]{32}$" },
+              "span_id": { "type": "string", "pattern": "^[0-9a-f]{16}$" },
+              "parent_span_id": { "type": ["string", "null"] },
+              "kind": { "type": "string" },
+              "start_time_unix_nano": { "type": "string", "pattern": "^[0-9]+$" },
+              "end_time_unix_nano": { "type": "string", "pattern": "^[0-9]+$" },
+              "duration_ms": { "type": "number" },
+              "status": {
+                "type": "object",
+                "required": ["code"],
+                "properties": { "code": { "enum": ["UNSET", "OK", "ERROR"] }, "message": { "type": ["string", "null"] } }
+              },
+              "attributes": { "type": "object" },
+              "events": { "type": "array" }
+            }
+          }
+        },
+        "metrics": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "unit", "type", "data_points"],
+            "properties": {
+              "name": { "type": "string" },
+              "unit": { "type": "string" },
+              "type": { "enum": ["HISTOGRAM", "SUM", "GAUGE", "EXPONENTIAL_HISTOGRAM"] },
+              "data_points": {
+                "type": "array",
+                "items": { "type": "object", "required": ["attributes", "value"] }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

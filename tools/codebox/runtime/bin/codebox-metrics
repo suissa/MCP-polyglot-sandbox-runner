@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+# codebox-metrics — process/system snapshot inside the box.
+#
+# Appends the ps capture to monitoramento.log and overwrites top_snapshot.log
+# (in $CODEBOX_LOG_DIR, default /workspace/logs), then prints every section
+# (ps, top, cgroup, loadavg, meminfo) to stdout for the MCP server to parse.
+#
+# Usage: codebox-metrics [label] [copy-dir]
+#   label     free text written in the log header (e.g. during/after)
+#   copy-dir  optional dir that receives top_<label>.log
+LOG_DIR="${CODEBOX_LOG_DIR:-/workspace/logs}"
+LABEL="${1:-snapshot}"
+COPY_DIR="${2:-}"
+mkdir -p "$LOG_DIR"
+cd "$LOG_DIR" || exit 1
+
+echo "--- Captura em: $(date '+%Y-%m-%d %H:%M:%S') ---" >> monitoramento.log
+ps -eo pid,user,%cpu,%mem,comm --sort=-%cpu | head -n 6 >> monitoramento.log
+echo "" >> monitoramento.log
+
+top -b -n 1 > top_snapshot.log
+
+if [ -n "$COPY_DIR" ]; then
+  mkdir -p "$COPY_DIR" && cp top_snapshot.log "$COPY_DIR/top_${LABEL}.log"
+fi
+
+echo "### LABEL"
+echo "$LABEL"
+echo "### DATE"
+date -u '+%Y-%m-%dT%H:%M:%S.%3NZ'
+echo "### PS"
+ps -eo pid,ppid,user,%cpu,%mem,rss,vsz,nlwp,etimes,stat,comm --sort=-%cpu
+echo "### TOP"
+cat top_snapshot.log
+echo "### CGROUP"
+if [ -r /sys/fs/cgroup/cgroup.controllers ]; then
+  echo "cgroup.version 2"
+  CG_FILES="cpu.stat memory.current memory.peak memory.max memory.swap.current pids.current pids.max pids.peak io.stat"
+else
+  echo "cgroup.version 1"
+  CG_FILES="cpuacct/cpuacct.usage cpuacct/cpuacct.stat cpu/cpu.stat memory/memory.usage_in_bytes memory/memory.max_usage_in_bytes memory/memory.limit_in_bytes memory/memory.failcnt pids/pids.current pids/pids.max"
+fi
+for f in $CG_FILES; do
+  [ -r "/sys/fs/cgroup/$f" ] || continue
+  while IFS= read -r line; do echo "${f##*/} $line"; done < "/sys/fs/cgroup/$f"
+done
+echo "### LOADAVG"
+cat /proc/loadavg
+echo "### MEMINFO"
+grep -E '^(MemTotal|MemFree|MemAvailable|Buffers|Cached|SwapTotal|SwapFree):' /proc/meminfo
+echo "### UPTIME"
+cut -d' ' -f1 /proc/uptime

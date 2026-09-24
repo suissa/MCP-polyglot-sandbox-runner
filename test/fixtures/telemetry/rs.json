@@ -1,0 +1,309 @@
+{
+  "box": null,
+  "command": [
+    "/tmp/codebox-rs-7323/program"
+  ],
+  "compile": {
+    "command": [
+      "rustc",
+      "--edition",
+      "2021",
+      "-O",
+      "-o",
+      "/tmp/codebox-rs-7323/program",
+      "/workspace/codes/hello.rs"
+    ],
+    "duration_ms": 122.643452,
+    "exit_code": 0,
+    "output": ""
+  },
+  "entry": "/workspace/codes/hello.rs",
+  "otel": {
+    "metrics": [
+      {
+        "data_points": [
+          {
+            "attributes": {
+              "code.filepath": "/workspace/codes/hello.rs"
+            },
+            "value": {
+              "buckets": {
+                "boundaries": [
+                  0.0,
+                  5.0,
+                  10.0,
+                  25.0,
+                  50.0,
+                  75.0,
+                  100.0,
+                  250.0,
+                  500.0,
+                  750.0,
+                  1000.0,
+                  2500.0,
+                  5000.0,
+                  7500.0,
+                  10000.0
+                ],
+                "counts": [
+                  0,
+                  0,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "count": 1,
+              "max": 25.891628,
+              "min": 25.891628,
+              "sum": 25.891628
+            }
+          }
+        ],
+        "name": "process.duration",
+        "type": "HISTOGRAM",
+        "unit": "ms"
+      },
+      {
+        "data_points": [
+          {
+            "attributes": {
+              "code.filepath": "/workspace/codes/hello.rs"
+            },
+            "value": {
+              "buckets": {
+                "boundaries": [
+                  0.0,
+                  5.0,
+                  10.0,
+                  25.0,
+                  50.0,
+                  75.0,
+                  100.0,
+                  250.0,
+                  500.0,
+                  750.0,
+                  1000.0,
+                  2500.0,
+                  5000.0,
+                  7500.0,
+                  10000.0
+                ],
+                "counts": [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "count": 1,
+              "max": 122.643452,
+              "min": 122.643452,
+              "sum": 122.643452
+            }
+          }
+        ],
+        "name": "codebox.compile.duration",
+        "type": "HISTOGRAM",
+        "unit": "ms"
+      },
+      {
+        "data_points": [
+          {
+            "attributes": {
+              "code.filepath": "/workspace/codes/hello.rs",
+              "cpu.mode": "user"
+            },
+            "value": 4.287
+          },
+          {
+            "attributes": {
+              "code.filepath": "/workspace/codes/hello.rs",
+              "cpu.mode": "system"
+            },
+            "value": 21.379
+          }
+        ],
+        "name": "process.cpu.time",
+        "type": "SUM",
+        "unit": "ms"
+      },
+      {
+        "data_points": [
+          {
+            "attributes": {
+              "code.filepath": "/workspace/codes/hello.rs"
+            },
+            "value": 40996.0
+          }
+        ],
+        "name": "process.memory.max_rss",
+        "type": "GAUGE",
+        "unit": "KiBy"
+      },
+      {
+        "data_points": [
+          {
+            "attributes": {
+              "code.filepath": "/workspace/codes/hello.rs",
+              "process.paging.fault_type": "major"
+            },
+            "value": 0.0
+          },
+          {
+            "attributes": {
+              "code.filepath": "/workspace/codes/hello.rs",
+              "process.paging.fault_type": "minor"
+            },
+            "value": 9841.0
+          }
+        ],
+        "name": "process.paging.faults",
+        "type": "SUM",
+        "unit": "{fault}"
+      },
+      {
+        "data_points": [
+          {
+            "attributes": {
+              "code.filepath": "/workspace/codes/hello.rs",
+              "process.context_switch_type": "involuntary"
+            },
+            "value": 1.0
+          },
+          {
+            "attributes": {
+              "code.filepath": "/workspace/codes/hello.rs",
+              "process.context_switch_type": "voluntary"
+            },
+            "value": 1.0
+          }
+        ],
+        "name": "process.context_switches",
+        "type": "SUM",
+        "unit": "{count}"
+      }
+    ],
+    "resource": {
+      "codebox.box": "",
+      "codebox.run_id": "",
+      "host.name": "fixture",
+      "process.runtime.name": "rust",
+      "service.name": "codebox-local",
+      "service.version": "1.0.0"
+    },
+    "spans": [
+      {
+        "attributes": {
+          "process.command_args": "rustc --edition 2021 -O -o /tmp/codebox-rs-7323/program /workspace/codes/hello.rs"
+        },
+        "duration_ms": 122.66891100000001,
+        "end_time_unix_nano": "1790245844534873862",
+        "events": [],
+        "kind": "INTERNAL",
+        "name": "compile",
+        "parent_span_id": "f24cce8c84932f9d",
+        "span_id": "eacf4dffe2e6bc7e",
+        "start_time_unix_nano": "1790245844412204951",
+        "status": {
+          "code": "OK",
+          "message": null
+        },
+        "trace_id": "40c13e726aa91e08687ff85f679890c2"
+      },
+      {
+        "attributes": {
+          "process.command_args": "/tmp/codebox-rs-7323/program",
+          "process.exit.code": 0,
+          "process.pid": 7345
+        },
+        "duration_ms": 25.87694,
+        "end_time_unix_nano": "1790245844560765443",
+        "events": [],
+        "kind": "CLIENT",
+        "name": "process.exec",
+        "parent_span_id": "f24cce8c84932f9d",
+        "span_id": "c90d2f7860b479f5",
+        "start_time_unix_nano": "1790245844534888503",
+        "status": {
+          "code": "OK",
+          "message": null
+        },
+        "trace_id": "40c13e726aa91e08687ff85f679890c2"
+      },
+      {
+        "attributes": {
+          "code.filepath": "/workspace/codes/hello.rs",
+          "codebox.language": "rust",
+          "process.exit.code": 0
+        },
+        "duration_ms": 148.693874,
+        "end_time_unix_nano": "1790245844560835238",
+        "events": [],
+        "kind": "INTERNAL",
+        "name": "codebox.run",
+        "parent_span_id": null,
+        "span_id": "f24cce8c84932f9d",
+        "start_time_unix_nano": "1790245844412141364",
+        "status": {
+          "code": "OK",
+          "message": null
+        },
+        "trace_id": "40c13e726aa91e08687ff85f679890c2"
+      }
+    ]
+  },
+  "process": {
+    "duration_ms": 25.891628,
+    "ended_at": "2026-09-24T10:30:44.560Z",
+    "exit_code": 0,
+    "pid": 7345,
+    "signal": null,
+    "spawn_error": null,
+    "started_at": "2026-09-24T10:30:44.534Z",
+    "timed_out": false
+  },
+  "resources": {
+    "fs_in_blocks": 0,
+    "fs_out_blocks": 0,
+    "involuntary_ctx_switches": 1,
+    "major_page_faults": 0,
+    "max_rss_kb": 40996,
+    "minor_page_faults": 9841,
+    "system_cpu_ms": 21.379,
+    "threads": null,
+    "user_cpu_ms": 4.287,
+    "voluntary_ctx_switches": 1
+  },
+  "run_id": null,
+  "runner": {
+    "language": "rust",
+    "name": "codebox-run-rs",
+    "sdk": "opentelemetry-rust",
+    "sdk_version": "0.33"
+  },
+  "schema": "codebox.telemetry/v1"
+}

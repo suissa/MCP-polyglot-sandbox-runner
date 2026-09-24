@@ -1,0 +1,316 @@
+{
+  "box": null,
+  "command": [
+    "/tmp/codebox-go-1765735275/program"
+  ],
+  "compile": {
+    "command": [
+      "go",
+      "build",
+      "-o",
+      "/tmp/codebox-go-1765735275/program",
+      "/workspace/codes/hello.go"
+    ],
+    "exit_code": 0,
+    "duration_ms": 173.796456,
+    "output": ""
+  },
+  "entry": "/workspace/codes/hello.go",
+  "otel": {
+    "metrics": [
+      {
+        "data_points": [
+          {
+            "attributes": {
+              "code.filepath": "/workspace/codes/hello.go"
+            },
+            "value": {
+              "buckets": {
+                "boundaries": [
+                  0,
+                  5,
+                  10,
+                  25,
+                  50,
+                  75,
+                  100,
+                  250,
+                  500,
+                  750,
+                  1000,
+                  2500,
+                  5000,
+                  7500,
+                  10000
+                ],
+                "counts": [
+                  0,
+                  0,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "count": 1,
+              "max": 38.024079,
+              "min": 38.024079,
+              "sum": 38.024079
+            }
+          }
+        ],
+        "name": "process.duration",
+        "type": "HISTOGRAM",
+        "unit": "ms"
+      },
+      {
+        "data_points": [
+          {
+            "attributes": {
+              "code.filepath": "/workspace/codes/hello.go"
+            },
+            "value": {
+              "buckets": {
+                "boundaries": [
+                  0,
+                  5,
+                  10,
+                  25,
+                  50,
+                  75,
+                  100,
+                  250,
+                  500,
+                  750,
+                  1000,
+                  2500,
+                  5000,
+                  7500,
+                  10000
+                ],
+                "counts": [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "count": 1,
+              "max": 173.796456,
+              "min": 173.796456,
+              "sum": 173.796456
+            }
+          }
+        ],
+        "name": "codebox.compile.duration",
+        "type": "HISTOGRAM",
+        "unit": "ms"
+      },
+      {
+        "data_points": [
+          {
+            "attributes": {
+              "code.filepath": "/workspace/codes/hello.go",
+              "cpu.mode": "user"
+            },
+            "value": 33.784
+          },
+          {
+            "attributes": {
+              "code.filepath": "/workspace/codes/hello.go",
+              "cpu.mode": "system"
+            },
+            "value": 3.954
+          }
+        ],
+        "name": "process.cpu.time",
+        "type": "SUM",
+        "unit": "ms"
+      },
+      {
+        "data_points": [
+          {
+            "attributes": {
+              "code.filepath": "/workspace/codes/hello.go"
+            },
+            "value": 6932
+          }
+        ],
+        "name": "process.memory.max_rss",
+        "type": "GAUGE",
+        "unit": "KiBy"
+      },
+      {
+        "data_points": [
+          {
+            "attributes": {
+              "code.filepath": "/workspace/codes/hello.go",
+              "process.paging.fault_type": "major"
+            },
+            "value": 0
+          },
+          {
+            "attributes": {
+              "code.filepath": "/workspace/codes/hello.go",
+              "process.paging.fault_type": "minor"
+            },
+            "value": 211
+          }
+        ],
+        "name": "process.paging.faults",
+        "type": "SUM",
+        "unit": "{fault}"
+      },
+      {
+        "data_points": [
+          {
+            "attributes": {
+              "code.filepath": "/workspace/codes/hello.go",
+              "process.context_switch_type": "involuntary"
+            },
+            "value": 2
+          },
+          {
+            "attributes": {
+              "code.filepath": "/workspace/codes/hello.go",
+              "process.context_switch_type": "voluntary"
+            },
+            "value": 75
+          }
+        ],
+        "name": "process.context_switches",
+        "type": "SUM",
+        "unit": "{count}"
+      }
+    ],
+    "resource": {
+      "codebox.box": "",
+      "codebox.run_id": "",
+      "host.name": "fixture",
+      "process.runtime.name": "go",
+      "process.runtime.version": "go1.25.0",
+      "service.name": "codebox-local",
+      "service.version": "1.0.0"
+    },
+    "spans": [
+      {
+        "attributes": {
+          "process.command_args": [
+            "go",
+            "build",
+            "-o",
+            "/tmp/codebox-go-1765735275/program",
+            "/workspace/codes/hello.go"
+          ]
+        },
+        "duration_ms": 173.848567,
+        "end_time_unix_nano": "1790247235439392362",
+        "events": [],
+        "kind": "INTERNAL",
+        "name": "compile",
+        "parent_span_id": "3bb29bb7624b379e",
+        "span_id": "f05bee329537b4c0",
+        "start_time_unix_nano": "1790247235265543795",
+        "status": {
+          "code": "OK",
+          "message": ""
+        },
+        "trace_id": "c1994ec9f578d78088b26538a98149b9"
+      },
+      {
+        "attributes": {
+          "process.command_args": [
+            "/tmp/codebox-go-1765735275/program"
+          ],
+          "process.exit.code": 0,
+          "process.pid": 21165
+        },
+        "duration_ms": 38.007131,
+        "end_time_unix_nano": "1790247235477412597",
+        "events": [],
+        "kind": "CLIENT",
+        "name": "process.exec",
+        "parent_span_id": "3bb29bb7624b379e",
+        "span_id": "1206685a403085cb",
+        "start_time_unix_nano": "1790247235439405466",
+        "status": {
+          "code": "OK",
+          "message": ""
+        },
+        "trace_id": "c1994ec9f578d78088b26538a98149b9"
+      },
+      {
+        "attributes": {
+          "code.filepath": "/workspace/codes/hello.go",
+          "codebox.language": "go",
+          "process.exit.code": 0
+        },
+        "duration_ms": 212.171242,
+        "end_time_unix_nano": "1790247235477597867",
+        "events": [],
+        "kind": "INTERNAL",
+        "name": "codebox.run",
+        "parent_span_id": null,
+        "span_id": "3bb29bb7624b379e",
+        "start_time_unix_nano": "1790247235265426625",
+        "status": {
+          "code": "OK",
+          "message": ""
+        },
+        "trace_id": "c1994ec9f578d78088b26538a98149b9"
+      }
+    ]
+  },
+  "process": {
+    "pid": 21165,
+    "exit_code": 0,
+    "signal": null,
+    "timed_out": false,
+    "spawn_error": null,
+    "started_at": "2026-09-24T10:53:55.439400162Z",
+    "ended_at": "2026-09-24T10:53:55.477424236Z",
+    "duration_ms": 38.024079
+  },
+  "resources": {
+    "fs_in_blocks": 0,
+    "fs_out_blocks": 0,
+    "involuntary_ctx_switches": 2,
+    "major_page_faults": 0,
+    "max_rss_kb": 6932,
+    "minor_page_faults": 211,
+    "system_cpu_ms": 3.954,
+    "threads": null,
+    "user_cpu_ms": 33.784,
+    "voluntary_ctx_switches": 75
+  },
+  "run_id": null,
+  "runner": {
+    "language": "go",
+    "name": "codebox-run-go",
+    "sdk": "opentelemetry-go",
+    "sdk_version": "1.46.0"
+  },
+  "schema": "codebox.telemetry/v1"
+}

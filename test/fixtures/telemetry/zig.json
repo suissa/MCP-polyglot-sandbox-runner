@@ -1,0 +1,307 @@
+{
+  "schema": "codebox.telemetry/v1",
+  "runner": {
+    "language": "zig",
+    "name": "codebox-run-zig",
+    "sdk": "codebox-otel-zig (OTel data model)",
+    "sdk_version": "0.16.0"
+  },
+  "run_id": null,
+  "box": null,
+  "entry": "/workspace/codes/hello.zig",
+  "command": [
+    "/tmp/codebox-zig-7502/program",
+    "a",
+    "b"
+  ],
+  "compile": {
+    "command": [
+      "zig",
+      "build-exe",
+      "/workspace/codes/hello.zig",
+      "-O",
+      "ReleaseSafe",
+      "-femit-bin=/tmp/codebox-zig-7502/program"
+    ],
+    "exit_code": 0,
+    "duration_ms": 17788.665,
+    "output": ""
+  },
+  "process": {
+    "pid": 7513,
+    "exit_code": 0,
+    "signal": null,
+    "timed_out": false,
+    "spawn_error": null,
+    "started_at": "2026-09-24T10:33:28.443Z",
+    "ended_at": "2026-09-24T10:33:28.444Z",
+    "duration_ms": 0.71
+  },
+  "resources": {
+    "user_cpu_ms": 0.526,
+    "system_cpu_ms": 0.0,
+    "max_rss_kb": 740,
+    "minor_page_faults": 90,
+    "major_page_faults": 0,
+    "voluntary_ctx_switches": 1,
+    "involuntary_ctx_switches": 0,
+    "fs_in_blocks": 0,
+    "fs_out_blocks": 0,
+    "threads": null
+  },
+  "otel": {
+    "resource": {
+      "service.name": "codebox-local",
+      "service.version": "1.0.0",
+      "codebox.box": "",
+      "codebox.run_id": "",
+      "process.runtime.name": "zig",
+      "process.runtime.version": "0.16.0",
+      "host.name": "fixture"
+    },
+    "spans": [
+      {
+        "name": "compile",
+        "trace_id": "8ce43db28b9018cbc7eda6c99814c88f",
+        "span_id": "08a2e93deebef580",
+        "parent_span_id": "9eee3c583001fb01",
+        "kind": "INTERNAL",
+        "start_time_unix_nano": "1790245990655243140",
+        "end_time_unix_nano": "1790246008443908695",
+        "duration_ms": 17788.666,
+        "status": {
+          "code": "OK",
+          "message": null
+        },
+        "attributes": {},
+        "events": []
+      },
+      {
+        "name": "process.exec",
+        "trace_id": "8ce43db28b9018cbc7eda6c99814c88f",
+        "span_id": "00283c18f11f5227",
+        "parent_span_id": "9eee3c583001fb01",
+        "kind": "CLIENT",
+        "start_time_unix_nano": "1790246008443910452",
+        "end_time_unix_nano": "1790246008444618600",
+        "duration_ms": 0.708,
+        "status": {
+          "code": "OK",
+          "message": null
+        },
+        "attributes": {
+          "process.pid": 7513,
+          "process.exit.code": 0
+        },
+        "events": []
+      },
+      {
+        "name": "codebox.run",
+        "trace_id": "8ce43db28b9018cbc7eda6c99814c88f",
+        "span_id": "9eee3c583001fb01",
+        "parent_span_id": null,
+        "kind": "INTERNAL",
+        "start_time_unix_nano": "1790245990655173511",
+        "end_time_unix_nano": "1790246008444618740",
+        "duration_ms": 17789.445,
+        "status": {
+          "code": "OK",
+          "message": null
+        },
+        "attributes": {
+          "code.filepath": "/workspace/codes/hello.zig",
+          "codebox.language": "zig"
+        },
+        "events": []
+      }
+    ],
+    "metrics": [
+      {
+        "name": "process.duration",
+        "unit": "ms",
+        "type": "HISTOGRAM",
+        "data_points": [
+          {
+            "attributes": {
+              "code.filepath": "/workspace/codes/hello.zig"
+            },
+            "value": {
+              "count": 1,
+              "sum": 0.71,
+              "min": 0.71,
+              "max": 0.71,
+              "buckets": {
+                "boundaries": [
+                  0,
+                  5,
+                  10,
+                  25,
+                  50,
+                  75,
+                  100,
+                  250,
+                  500,
+                  750,
+                  1000,
+                  2500,
+                  5000,
+                  7500,
+                  10000
+                ],
+                "counts": [
+                  0,
+                  1,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "name": "codebox.compile.duration",
+        "unit": "ms",
+        "type": "HISTOGRAM",
+        "data_points": [
+          {
+            "attributes": {
+              "code.filepath": "/workspace/codes/hello.zig"
+            },
+            "value": {
+              "count": 1,
+              "sum": 17788.665,
+              "min": 17788.665,
+              "max": 17788.665,
+              "buckets": {
+                "boundaries": [
+                  0,
+                  5,
+                  10,
+                  25,
+                  50,
+                  75,
+                  100,
+                  250,
+                  500,
+                  750,
+                  1000,
+                  2500,
+                  5000,
+                  7500,
+                  10000
+                ],
+                "counts": [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  1
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "name": "process.cpu.time",
+        "unit": "ms",
+        "type": "SUM",
+        "data_points": [
+          {
+            "attributes": {
+              "code.filepath": "/workspace/codes/hello.zig",
+              "cpu.mode": "user"
+            },
+            "value": 0.526
+          },
+          {
+            "attributes": {
+              "code.filepath": "/workspace/codes/hello.zig",
+              "cpu.mode": "system"
+            },
+            "value": 0.0
+          }
+        ]
+      },
+      {
+        "name": "process.memory.max_rss",
+        "unit": "KiBy",
+        "type": "GAUGE",
+        "data_points": [
+          {
+            "attributes": {
+              "code.filepath": "/workspace/codes/hello.zig"
+            },
+            "value": 740.0
+          }
+        ]
+      },
+      {
+        "name": "process.paging.faults",
+        "unit": "{fault}",
+        "type": "SUM",
+        "data_points": [
+          {
+            "attributes": {
+              "code.filepath": "/workspace/codes/hello.zig",
+              "process.paging.fault_type": "minor"
+            },
+            "value": 90.0
+          },
+          {
+            "attributes": {
+              "code.filepath": "/workspace/codes/hello.zig",
+              "process.paging.fault_type": "major"
+            },
+            "value": 0.0
+          }
+        ]
+      },
+      {
+        "name": "process.context_switches",
+        "unit": "{count}",
+        "type": "SUM",
+        "data_points": [
+          {
+            "attributes": {
+              "code.filepath": "/workspace/codes/hello.zig",
+              "process.context_switch_type": "voluntary"
+            },
+            "value": 1.0
+          },
+          {
+            "attributes": {
+              "code.filepath": "/workspace/codes/hello.zig",
+              "process.context_switch_type": "involuntary"
+            },
+            "value": 0.0
+          }
+        ]
+      }
+    ]
+  }
+}

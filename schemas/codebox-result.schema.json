@@ -1,0 +1,187 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:codebox:result:v1",
+  "title": "Codebox aggregated result",
+  "description": "Returned by every codebox_* MCP tool: on the incoming channel, or delivered to { response_channel, response_path } (the call then answers status \"accepted\").",
+  "type": "object",
+  "required": ["schema", "request_id", "tool", "box", "status", "received_at", "channel", "files", "errors"],
+  "properties": {
+    "schema": { "const": "codebox.result/v1" },
+    "request_id": { "type": "string" },
+    "tool": { "type": "string" },
+    "box": { "type": ["string", "null"] },
+    "status": {
+      "description": "accepted: will be delivered elsewhere · ok · failed: program exit != 0 · timeout · setup_failed · path_required: a name without path matches several files · rejected · not_found · invalid_request · error",
+      "enum": ["accepted", "ok", "failed", "timeout", "setup_failed", "path_required", "rejected", "not_found", "invalid_request", "error"]
+    },
+    "received_at": { "type": "string" },
+    "finished_at": { "type": ["string", "null"] },
+    "duration_ms": { "type": ["number", "null"] },
+    "channel": {
+      "type": "object",
+      "required": ["received_via", "response_channel", "response_path", "delivered", "delivery_error"],
+      "properties": {
+        "received_via": { "enum": ["stdio", "rest", "websocket", "nats"] },
+        "response_channel": { "enum": ["stdio", "rest", "websocket", "nats"] },
+        "response_path": { "type": ["string", "null"] },
+        "delivered": { "type": ["boolean", "null"] },
+        "delivery_error": { "type": ["string", "null"] }
+      }
+    },
+    "files": {
+      "type": "object",
+      "required": ["written", "rejected"],
+      "properties": {
+        "written": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "path", "action", "resolved_by", "bytes", "sha256"],
+            "properties": {
+              "name": { "type": "string" },
+              "path": { "type": "string" },
+              "action": { "enum": ["created", "overwritten"] },
+              "resolved_by": { "enum": ["path", "index", "new"] },
+              "language": { "type": ["string", "null"] },
+              "bytes": { "type": "integer" },
+              "sha256": { "type": "string" }
+            }
+          }
+        },
+        "rejected": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "reason"],
+            "properties": {
+              "name": { "type": "string" },
+              "reason": { "type": "string" },
+              "candidates": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        }
+      }
+    },
+    "index": {
+      "type": ["object", "null"],
+      "properties": {
+        "unique": { "type": "object", "additionalProperties": { "type": "string" } },
+        "duplicates": { "type": "object", "additionalProperties": { "type": "array", "items": { "type": "string" } } }
+      }
+    },
+    "setup": {
+      "description": "Output of the `setup` script (report: codebox.setup/v1).",
+      "type": ["object", "null"],
+      "properties": {
+        "status": { "type": "string" },
+        "exit_code": { "type": ["integer", "null"] },
+        "report": {
+          "type": ["object", "null"],
+          "properties": {
+            "schema": { "const": "codebox.setup/v1" },
+            "status": { "enum": ["ok", "preflight_failed", "install_failed", "build_failed", "test_failed"] },
+            "languages": { "type": "array", "items": { "type": "string" } },
+            "steps": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["stage", "language", "exit_code", "duration_ms"],
+                "properties": {
+                  "stage": { "enum": ["preflight", "install", "build", "test"] },
+                  "language": { "type": "string" },
+                  "dir": { "type": "string" },
+                  "command": { "type": ["string", "null"] },
+                  "exit_code": { "type": "integer" },
+                  "duration_ms": { "type": "integer" },
+                  "output": { "type": "string" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "execution": {
+      "description": "The process started by the tool (codebox-run inside the box, or ./codebox up).",
+      "type": ["object", "null"],
+      "properties": {
+        "run_id": { "type": "string" },
+        "entry": { "type": "string" },
+        "language": { "type": "string" },
+        "command": { "type": "array", "items": { "type": "string" } },
+        "exit_code": { "type": ["integer", "null"] },
+        "signal": { "type": ["string", "null"] },
+        "timed_out": { "type": "boolean" },
+        "wall_ms": { "type": "number" },
+        "stdout": { "type": "string" },
+        "stderr": { "type": "string" }
+      }
+    },
+    "telemetry": {
+      "description": "The runner document (schemas/codebox-telemetry.schema.json).",
+      "anyOf": [{ "type": "null" }, { "$ref": "urn:codebox:telemetry:v1" }]
+    },
+    "metrics": {
+      "type": ["object", "null"],
+      "properties": {
+        "samples": {
+          "type": "object",
+          "description": "codebox-metrics snapshots (ps, top, cgroup, loadavg, meminfo) taken while the code runs and after it.",
+          "properties": {
+            "during": { "type": "array", "items": { "$ref": "#/$defs/snapshot" } },
+            "after": { "$ref": "#/$defs/snapshot" }
+          }
+        },
+        "docker_stats": { "type": "object" },
+        "host": { "type": "object" }
+      }
+    },
+    "logs": {
+      "type": ["object", "null"],
+      "properties": {
+        "monitoramento": { "type": "string" },
+        "top_snapshot": { "type": "string" },
+        "run_dir": { "type": "string" }
+      }
+    },
+    "errors": {
+      "type": "array",
+      "items": { "type": "object", "required": ["message"], "properties": { "message": { "type": "string" } } }
+    }
+  },
+  "$defs": {
+    "snapshot": {
+      "type": "object",
+      "properties": {
+        "label": { "type": ["string", "null"] },
+        "captured_at": { "type": ["string", "null"] },
+        "ps": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "pid": { "type": "number" },
+              "ppid": { "type": "number" },
+              "user": { "type": "string" },
+              "cpu_percent": { "type": "number" },
+              "mem_percent": { "type": "number" },
+              "rss_kb": { "type": "number" },
+              "vsz_kb": { "type": "number" },
+              "threads": { "type": "number" },
+              "elapsed_s": { "type": "number" },
+              "state": { "type": "string" },
+              "command": { "type": "string" }
+            }
+          }
+        },
+        "top": { "type": "object" },
+        "top_raw": { "type": "string" },
+        "cgroup": { "type": "object" },
+        "loadavg": { "type": ["object", "null"] },
+        "meminfo_kb": { "type": "object" },
+        "uptime_s": { "type": ["number", "null"] },
+        "error": { "type": "string" }
+      }
+    }
+  }
+}

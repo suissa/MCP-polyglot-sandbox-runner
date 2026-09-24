@@ -90,7 +90,7 @@ export function natsTransport({ url, rpcSubject, queue }) {
       if (replyTo) publish(replyTo, { jsonrpc: '2.0', id: null, error: { code: -32700, message: cause.message } });
       return;
     }
-    const response = await dispatchFn(request);
+    const response = await dispatchFn(request, { transport: 'nats' });
     if (replyTo && response) publish(replyTo, response);
   }
 

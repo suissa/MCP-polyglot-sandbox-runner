@@ -1,0 +1,16 @@
+{
+  "name": "codebox-run-ts",
+  "private": true,
+  "type": "module",
+  "description": "OpenTelemetry wrapper that spawns TypeScript/JavaScript entrypoints",
+  "dependencies": {
+    "@opentelemetry/api": "^1.9.1",
+    "@opentelemetry/resources": "^2.11.0",
+    "@opentelemetry/sdk-metrics": "^2.11.0",
+    "@opentelemetry/sdk-trace-base": "^2.11.0",
+    "@opentelemetry/semantic-conventions": "^1.43.0",
+    "@types/node": "^22.0.0",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3"
+  }
+}
