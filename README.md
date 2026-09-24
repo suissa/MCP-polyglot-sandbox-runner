@@ -2,7 +2,7 @@
 
 Servidor MCP padronizado e motor de execução isolada de código para agentes de IA, utilizando **Docker** e sandbox de kernel **gVisor (`runsc`)**.
 
-Em conformidade rigorosa com a arquitetura `docs/MCP-STANDARD.md` do ecossistema AllasCode / Lucy-Mae, suportando múltiplos transportes simultâneos (stdio, REST, WebSocket e NATS), desacoplamento total via Everything-as-Code (`configs/core.yml`) e camada de compatibilidade nativa com `@modelcontextprotocol/sdk`.
+Em conformidade rigorosa com a arquitetura `docs/MCP-STANDARD.md` do ecossistema AllasCode, suportando múltiplos transportes simultâneos (stdio, REST, WebSocket e NATS), desacoplamento total via Everything-as-Code (`configs/core.yml`) e camada de compatibilidade nativa com `@modelcontextprotocol/sdk`.
 
 ---
 
