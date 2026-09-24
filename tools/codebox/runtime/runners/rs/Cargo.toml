@@ -1,0 +1,20 @@
+[package]
+name = "codebox-run-rs"
+version = "1.0.0"
+edition = "2021"
+description = "OpenTelemetry wrapper that spawns Rust entrypoints"
+publish = false
+
+[[bin]]
+name = "codebox-run-rs"
+path = "src/main.rs"
+
+[dependencies]
+opentelemetry = { version = "0.33", features = ["trace", "metrics"] }
+opentelemetry_sdk = { version = "0.33", features = ["trace", "metrics", "testing"] }
+serde_json = "1"
+libc = "0.2"
+
+[profile.release]
+opt-level = 3
+strip = true

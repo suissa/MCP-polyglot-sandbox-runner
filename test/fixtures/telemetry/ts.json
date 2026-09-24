@@ -1,0 +1,212 @@
+{
+  "schema": "codebox.telemetry/v1",
+  "runner": {
+    "language": "typescript",
+    "name": "codebox-run-ts",
+    "sdk": "opentelemetry-js",
+    "sdk_version": "2.x"
+  },
+  "run_id": null,
+  "box": null,
+  "entry": "/workspace/codes/hello.ts",
+  "command": [
+    "/usr/local/bin/node",
+    "--import",
+    "file:///home/user/MCP-polyglot-sandbox-runner/codebox/runtime/runners/ts/node_modules/tsx/dist/loader.mjs",
+    "/workspace/codes/hello.ts"
+  ],
+  "compile": null,
+  "process": {
+    "pid": 2230,
+    "exit_code": 0,
+    "signal": null,
+    "timed_out": false,
+    "spawn_error": null,
+    "started_at": "2026-09-24T10:26:27.542Z",
+    "ended_at": "2026-09-24T10:26:27.909Z",
+    "duration_ms": 366.571205
+  },
+  "resources": {
+    "user_cpu_ms": 400,
+    "system_cpu_ms": 40,
+    "max_rss_kb": 106348,
+    "minor_page_faults": 17007,
+    "major_page_faults": 0,
+    "voluntary_ctx_switches": 19,
+    "involuntary_ctx_switches": 1,
+    "fs_in_blocks": null,
+    "fs_out_blocks": null,
+    "threads": 6
+  },
+  "otel": {
+    "resource": {
+      "service.name": "codebox-local",
+      "service.version": "1.0.0",
+      "codebox.box": "",
+      "codebox.run_id": "",
+      "process.runtime.name": "nodejs",
+      "process.runtime.version": "22.22.2",
+      "host.name": "fixture"
+    },
+    "spans": [
+      {
+        "name": "process.exec",
+        "trace_id": "43aed839d6c0fa2274c5b3c34c4b85dc",
+        "span_id": "05480e7b46ae9e1f",
+        "parent_span_id": "db0a541b8436ce51",
+        "kind": "CLIENT",
+        "start_time_unix_nano": "1790245587543000000",
+        "end_time_unix_nano": "1790245587908710882",
+        "duration_ms": 365.710882,
+        "status": {
+          "code": "OK",
+          "message": null
+        },
+        "attributes": {
+          "process.command": "/usr/local/bin/node",
+          "process.command_args": [
+            "/usr/local/bin/node",
+            "--import",
+            "file:///home/user/MCP-polyglot-sandbox-runner/codebox/runtime/runners/ts/node_modules/tsx/dist/loader.mjs",
+            "/workspace/codes/hello.ts"
+          ],
+          "process.pid": 2230,
+          "process.exit.code": 0
+        },
+        "events": []
+      },
+      {
+        "name": "codebox.run",
+        "trace_id": "43aed839d6c0fa2274c5b3c34c4b85dc",
+        "span_id": "db0a541b8436ce51",
+        "parent_span_id": null,
+        "kind": "INTERNAL",
+        "start_time_unix_nano": "1790245587542000000",
+        "end_time_unix_nano": "1790245587909656406",
+        "duration_ms": 367.656406,
+        "status": {
+          "code": "OK",
+          "message": null
+        },
+        "attributes": {
+          "code.filepath": "/workspace/codes/hello.ts",
+          "codebox.language": "typescript",
+          "process.exit.code": 0
+        },
+        "events": []
+      }
+    ],
+    "metrics": [
+      {
+        "name": "process.duration",
+        "unit": "ms",
+        "type": "HISTOGRAM",
+        "data_points": [
+          {
+            "attributes": {
+              "code.filepath": "/workspace/codes/hello.ts"
+            },
+            "value": {
+              "min": 366.571205,
+              "max": 366.571205,
+              "sum": 366.571205,
+              "buckets": {
+                "boundaries": [
+                  0,
+                  5,
+                  10,
+                  25,
+                  50,
+                  75,
+                  100,
+                  250,
+                  500,
+                  750,
+                  1000,
+                  2500,
+                  5000,
+                  7500,
+                  10000
+                ],
+                "counts": [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  1,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "count": 1
+            }
+          }
+        ]
+      },
+      {
+        "name": "process.cpu.time",
+        "unit": "ms",
+        "type": "SUM",
+        "data_points": [
+          {
+            "attributes": {
+              "code.filepath": "/workspace/codes/hello.ts",
+              "cpu.mode": "user"
+            },
+            "value": 400
+          },
+          {
+            "attributes": {
+              "code.filepath": "/workspace/codes/hello.ts",
+              "cpu.mode": "system"
+            },
+            "value": 40
+          }
+        ]
+      },
+      {
+        "name": "process.memory.max_rss",
+        "unit": "KiBy",
+        "type": "GAUGE",
+        "data_points": [
+          {
+            "attributes": {
+              "code.filepath": "/workspace/codes/hello.ts"
+            },
+            "value": 106348
+          }
+        ]
+      },
+      {
+        "name": "process.paging.faults",
+        "unit": "{fault}",
+        "type": "SUM",
+        "data_points": [
+          {
+            "attributes": {
+              "code.filepath": "/workspace/codes/hello.ts",
+              "process.paging.fault_type": "minor"
+            },
+            "value": 17007
+          },
+          {
+            "attributes": {
+              "code.filepath": "/workspace/codes/hello.ts",
+              "process.paging.fault_type": "major"
+            },
+            "value": 0
+          }
+        ]
+      }
+    ]
+  }
+}

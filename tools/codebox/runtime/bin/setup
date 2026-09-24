@@ -1,0 +1,329 @@
+#!/usr/bin/env bash
+# setup — polyglot install → build → test for a codebox `codes/` folder.
+#
+# 1. scan:      reads the extension of every file and detects the languages
+#               (ts/tsx/mts/cts/js/mjs/cjs, py, go, rs, zig).
+# 2. preflight: cheap "dumb error" gate — toolchain present, manifests parse,
+#               every source file passes a syntax-only check. If anything
+#               fails here, NOTHING else runs.
+# 3. install:   package install per language/project.
+# 4. build:     compile / type-check.
+# 5. test:      run the test suites that exist.
+# Each stage only runs when the previous one had no errors.
+#
+# Usage: setup [dir=/workspace/codes] [--no-test] [--no-install]
+# Env:   CODEBOX_SETUP_REPORT  JSON report path (default <dir>/../runs/setup-report.json)
+#        CODEBOX_HOME          runtime root (default /opt/codebox)
+# Exit:  0 ok · 2 preflight · 3 install · 4 build · 5 test · 64 usage
+set -uo pipefail
+
+ROOT="/workspace/codes"
+RUN_TESTS=1
+RUN_INSTALL=1
+for arg in "$@"; do
+  case "$arg" in
+    --no-test) RUN_TESTS=0 ;;
+    --no-install) RUN_INSTALL=0 ;;
+    -h|--help) sed -n '2,20p' "$0"; exit 0 ;;
+    -*) echo "setup: unknown option $arg" >&2; exit 64 ;;
+    *) ROOT="$arg" ;;
+  esac
+done
+[ -d "$ROOT" ] || { echo "setup: directory not found: $ROOT" >&2; exit 64; }
+ROOT="$(cd "$ROOT" && pwd)"
+
+CODEBOX_HOME="${CODEBOX_HOME:-/opt/codebox}"
+REPORT="${CODEBOX_SETUP_REPORT:-$(dirname "$ROOT")/runs/setup-report.json}"
+TS_RUNNER_DIR="$CODEBOX_HOME/runners/ts"
+TMP="$(mktemp -d /tmp/codebox-setup.XXXXXX)"
+trap 'rm -rf "$TMP"' EXIT
+export PYTHONPYCACHEPREFIX="$TMP/pycache"
+export PYTHONDONTWRITEBYTECODE=1
+
+PRUNE=(-name node_modules -o -name target -o -name .zig-cache -o -name zig-cache -o -name zig-out
+       -o -name __pycache__ -o -name .venv -o -name venv -o -name .git -o -name .pytest_cache)
+
+files_with_ext() { # files_with_ext ext...  → NUL separated
+  local expr=() first=1
+  for ext in "$@"; do
+    [ $first -eq 1 ] && first=0 || expr+=(-o)
+    expr+=(-name "*.$ext")
+  done
+  find "$ROOT" \( -type d \( "${PRUNE[@]}" \) -prune \) -o -type f \( "${expr[@]}" \) -print0 | sort -z
+}
+
+dirs_with() { # dirs_with filename → newline separated dirs holding that file
+  find "$ROOT" \( -type d \( "${PRUNE[@]}" \) -prune \) -o -type f -name "$1" -printf '%h\n' | sort -u
+}
+
+has_manifest_ancestor() { # has_manifest_ancestor file manifest
+  local dir
+  dir="$(dirname "$1")"
+  while :; do
+    [ -f "$dir/$2" ] && return 0
+    [ "$dir" = "$ROOT" ] || [ "$dir" = "/" ] && return 1
+    dir="$(dirname "$dir")"
+  done
+}
+
+now_ms() { date +%s%3N; }
+
+json_escape() {
+  local s="$1"
+  s="${s//\\/\\\\}"; s="${s//\"/\\\"}"
+  s="${s//$'\n'/\\n}"; s="${s//$'\r'/\\r}"; s="${s//$'\t'/\\t}"
+  printf '%s' "$s"
+}
+
+STEPS=()
+FAILED=0
+LANGS=()
+
+rel() { if [ "$1" = "$ROOT" ]; then echo .; else echo "${1#"$ROOT"/}"; fi; }
+
+# step STAGE LANG DIR -- command...
+step() {
+  local stage="$1" lang="$2" dir="$3"; shift 4
+  local start end code out
+  start=$(now_ms)
+  printf '\n[%s][%s] (%s) $ %s\n' "$stage" "$lang" "$(rel "$dir")" "$*"
+  out="$( cd "$dir" && "$@" 2>&1 )"
+  code=$?
+  end=$(now_ms)
+  [ -n "$out" ] && printf '%s\n' "$out"
+  # pytest: exit 5 == no tests collected
+  if [ "$stage" = test ] && [ "$lang" = python ] && [ $code -eq 5 ]; then code=0; out="$out (no tests collected)"; fi
+  [ $code -ne 0 ] && FAILED=$((FAILED + 1))
+  out="$(printf '%s' "$out" | tr -d '\000-\010\013\014\016-\037' | tail -c 4000)"
+  STEPS+=("{\"stage\":\"$stage\",\"language\":\"$lang\",\"dir\":\"$(json_escape "$(rel "$dir")")\",\"command\":\"$(json_escape "$*")\",\"exit_code\":$code,\"duration_ms\":$((end - start)),\"output\":\"$(json_escape "$out")\"}")
+  return $code
+}
+
+# fail_step STAGE LANG MESSAGE — records a synthetic failure (e.g. missing toolchain)
+fail_step() {
+  printf '\n[%s][%s] ERROR: %s\n' "$1" "$2" "$3"
+  FAILED=$((FAILED + 1))
+  STEPS+=("{\"stage\":\"$1\",\"language\":\"$2\",\"dir\":\".\",\"command\":null,\"exit_code\":127,\"duration_ms\":0,\"output\":\"$(json_escape "$3")\"}")
+}
+
+STARTED_AT="$(date -u +%Y-%m-%dT%H:%M:%S.%3NZ)"
+T0=$(now_ms)
+
+write_report() { # write_report status exit_code
+  local langs_json="" steps_json="" i
+  for i in "${!LANGS[@]}"; do langs_json+="${i:+,}\"${LANGS[$i]}\""; done
+  langs_json="${langs_json#,}"
+  for i in "${!STEPS[@]}"; do steps_json+=",${STEPS[$i]}"; done
+  steps_json="${steps_json#,}"
+  mkdir -p "$(dirname "$REPORT")"
+  printf '{"schema":"codebox.setup/v1","root":"%s","status":"%s","exit_code":%d,"languages":[%s],"started_at":"%s","ended_at":"%s","duration_ms":%d,"steps":[%s]}\n' \
+    "$(json_escape "$ROOT")" "$1" "$2" "$langs_json" "$STARTED_AT" "$(date -u +%Y-%m-%dT%H:%M:%S.%3NZ)" $(( $(now_ms) - T0 )) "$steps_json" > "$REPORT"
+  printf '\nsetup: %s (report: %s)\n' "$1" "$REPORT"
+}
+
+finish_stage() { # finish_stage name exit_code
+  if [ $FAILED -gt 0 ]; then
+    write_report "${1}_failed" "$2"
+    exit "$2"
+  fi
+}
+
+# ---------------------------------------------------------------- scan ----
+declare -A HAS
+count() { files_with_ext "$@" | tr -cd '\0' | wc -c; }
+[ "$(count ts tsx mts cts js mjs cjs)" -gt 0 ] && HAS[typescript]=1 && LANGS+=(typescript)
+[ "$(count py)" -gt 0 ] && HAS[python]=1 && LANGS+=(python)
+[ "$(count go)" -gt 0 ] && HAS[go]=1 && LANGS+=(go)
+[ "$(count rs)" -gt 0 ] && HAS[rust]=1 && LANGS+=(rust)
+[ "$(count zig)" -gt 0 ] && HAS[zig]=1 && LANGS+=(zig)
+echo "setup: root=$ROOT languages=${LANGS[*]:-none}"
+if [ ${#LANGS[@]} -eq 0 ]; then write_report ok 0; exit 0; fi
+
+need() { # need lang tool...
+  local lang="$1"; shift
+  for tool in "$@"; do
+    command -v "$tool" >/dev/null 2>&1 || fail_step preflight "$lang" "toolchain not found: $tool"
+  done
+}
+
+ts_bin() { # local project binary first, then the runner's copy
+  if [ -x "$1/node_modules/.bin/$2" ]; then echo "$1/node_modules/.bin/$2"; else echo "$TS_RUNNER_DIR/node_modules/.bin/$2"; fi
+}
+
+tsx_loader() { (cd "$TS_RUNNER_DIR" && node --input-type=module -e "console.log(import.meta.resolve('tsx'))"); }
+
+pkg_script() { # pkg_script dir name → prints the npm script, if defined
+  node -e 'const p=require(process.argv[1]+"/package.json");const s=(p.scripts||{})[process.argv[2]];if(s&&!/no test specified/.test(s))console.log(s)' "$1" "$2" 2>/dev/null
+}
+
+# ----------------------------------------------------------- preflight ----
+echo; echo "== preflight (syntax / toolchain) =="
+if [ -n "${HAS[typescript]:-}" ]; then
+  need typescript node npm
+  if command -v node >/dev/null 2>&1; then
+    mapfile -d '' TS_FILES < <(files_with_ext ts tsx mts cts)
+    if [ ${#TS_FILES[@]} -gt 0 ]; then
+      step preflight typescript "$ROOT" -- node "$CODEBOX_HOME/bin/ts-syntax-check.mjs" "${TS_FILES[@]}"
+    fi
+    while IFS= read -r -d '' f; do step preflight typescript "$(dirname "$f")" -- node --check "$f"; done < <(files_with_ext js mjs cjs)
+    while IFS= read -r d; do
+      [ -n "$d" ] && step preflight typescript "$d" -- node -e 'JSON.parse(require("fs").readFileSync("package.json","utf8"))'
+    done < <(dirs_with package.json)
+  fi
+fi
+if [ -n "${HAS[python]:-}" ]; then
+  need python python3
+  while IFS= read -r -d '' f; do step preflight python "$(dirname "$f")" -- python3 -m py_compile "$f"; done < <(files_with_ext py)
+fi
+if [ -n "${HAS[go]:-}" ]; then
+  need go go gofmt
+  if command -v gofmt >/dev/null 2>&1; then
+    while IFS= read -r -d '' f; do step preflight go "$(dirname "$f")" -- sh -c 'gofmt -e -l "$1" >/dev/null' _ "$f"; done < <(files_with_ext go)
+    while IFS= read -r d; do [ -n "$d" ] && step preflight go "$d" -- sh -c 'go mod edit -json >/dev/null'; done < <(dirs_with go.mod)
+  fi
+fi
+if [ -n "${HAS[rust]:-}" ]; then
+  need rust cargo rustc
+  if command -v rustfmt >/dev/null 2>&1 && rustfmt --version >/dev/null 2>&1; then
+    while IFS= read -r -d '' f; do step preflight rust "$(dirname "$f")" -- sh -c 'rustfmt --edition 2021 --emit stdout "$1" >/dev/null' _ "$f"; done < <(files_with_ext rs)
+  else
+    echo "[preflight][rust] rustfmt unavailable: syntax is checked by the build stage"
+  fi
+  if command -v cargo >/dev/null 2>&1; then
+    while IFS= read -r d; do [ -n "$d" ] && step preflight rust "$d" -- sh -c 'cargo metadata --no-deps --format-version 1 --offline >/dev/null'; done < <(dirs_with Cargo.toml)
+  fi
+fi
+if [ -n "${HAS[zig]:-}" ]; then
+  need zig zig
+  if command -v zig >/dev/null 2>&1; then
+    while IFS= read -r -d '' f; do step preflight zig "$(dirname "$f")" -- zig ast-check "$f"; done < <(files_with_ext zig)
+  fi
+fi
+finish_stage preflight 2
+
+# ------------------------------------------------------------- install ----
+if [ $RUN_INSTALL -eq 1 ]; then
+  echo; echo "== install =="
+  if [ -n "${HAS[typescript]:-}" ]; then
+    while IFS= read -r d; do
+      [ -z "$d" ] && continue
+      if [ -f "$d/package-lock.json" ]; then step install typescript "$d" -- npm ci --no-audit --no-fund
+      else step install typescript "$d" -- npm install --no-audit --no-fund; fi
+    done < <(dirs_with package.json)
+  fi
+  if [ -n "${HAS[python]:-}" ]; then
+    while IFS= read -r d; do [ -n "$d" ] && step install python "$d" -- python3 -m pip install -q -r requirements.txt; done < <(dirs_with requirements.txt)
+    while IFS= read -r d; do [ -n "$d" ] && step install python "$d" -- python3 -m pip install -q -e .; done < <(dirs_with pyproject.toml)
+  fi
+  if [ -n "${HAS[go]:-}" ]; then
+    while IFS= read -r d; do [ -n "$d" ] && step install go "$d" -- go mod tidy; done < <(dirs_with go.mod)
+  fi
+  if [ -n "${HAS[rust]:-}" ]; then
+    while IFS= read -r d; do [ -n "$d" ] && step install rust "$d" -- cargo fetch; done < <(dirs_with Cargo.toml)
+  fi
+  if [ -n "${HAS[zig]:-}" ]; then
+    while IFS= read -r d; do [ -n "$d" ] && step install zig "$d" -- zig build --fetch; done < <(dirs_with build.zig.zon)
+  fi
+  finish_stage install 3
+fi
+
+# --------------------------------------------------------------- build ----
+echo; echo "== build =="
+if [ -n "${HAS[typescript]:-}" ]; then
+  while IFS= read -r d; do
+    [ -z "$d" ] && continue
+    if [ -n "$(pkg_script "$d" build)" ]; then step build typescript "$d" -- npm run build
+    elif [ -f "$d/tsconfig.json" ]; then step build typescript "$d" -- "$(ts_bin "$d" tsc)" --noEmit -p .
+    fi
+  done < <(dirs_with package.json)
+  while IFS= read -r d; do
+    [ -z "$d" ] || [ -f "$d/package.json" ] && continue
+    step build typescript "$d" -- "$(ts_bin "$d" tsc)" --noEmit -p .
+  done < <(dirs_with tsconfig.json)
+fi
+if [ -n "${HAS[python]:-}" ]; then
+  step build python "$ROOT" -- python3 -m compileall -q -x '/(node_modules|target|\.venv|venv|\.git|zig-out|\.zig-cache)/' .
+fi
+if [ -n "${HAS[go]:-}" ]; then
+  while IFS= read -r d; do [ -n "$d" ] && step build go "$d" -- go build ./...; done < <(dirs_with go.mod)
+  declare -A GO_LOOSE=()
+  while IFS= read -r -d '' f; do
+    case "$f" in *_test.go) continue ;; esac
+    has_manifest_ancestor "$f" go.mod || GO_LOOSE["$(dirname "$f")"]=1
+  done < <(files_with_ext go)
+  for d in "${!GO_LOOSE[@]}"; do
+    step build go "$d" -- sh -c 'go build -o "$1/go-bin" $(ls *.go | grep -v "_test\.go$")' _ "$TMP"
+  done
+fi
+if [ -n "${HAS[rust]:-}" ]; then
+  while IFS= read -r d; do [ -n "$d" ] && step build rust "$d" -- cargo build; done < <(dirs_with Cargo.toml)
+  while IFS= read -r -d '' f; do
+    has_manifest_ancestor "$f" Cargo.toml && continue
+    grep -qE 'fn[[:space:]]+main[[:space:]]*\(' "$f" || continue
+    step build rust "$(dirname "$f")" -- rustc --edition 2021 -o "$TMP/rs-bin" "$f"
+  done < <(files_with_ext rs)
+fi
+if [ -n "${HAS[zig]:-}" ]; then
+  while IFS= read -r d; do [ -n "$d" ] && step build zig "$d" -- zig build; done < <(dirs_with build.zig)
+  while IFS= read -r -d '' f; do
+    has_manifest_ancestor "$f" build.zig && continue
+    grep -qE 'pub[[:space:]]+fn[[:space:]]+main' "$f" || continue
+    step build zig "$(dirname "$f")" -- zig build-exe "$f" --cache-dir "$TMP/zig-cache" -femit-bin="$TMP/zig-bin"
+  done < <(files_with_ext zig)
+fi
+finish_stage build 4
+
+# ---------------------------------------------------------------- test ----
+if [ $RUN_TESTS -eq 1 ]; then
+  echo; echo "== test =="
+  if [ -n "${HAS[typescript]:-}" ]; then
+    NPM_TESTED=()
+    while IFS= read -r d; do
+      [ -z "$d" ] && continue
+      if [ -n "$(pkg_script "$d" test)" ]; then step test typescript "$d" -- npm test; NPM_TESTED+=("$d"); fi
+    done < <(dirs_with package.json)
+    LOOSE_TESTS=()
+    while IFS= read -r -d '' f; do
+      covered=0
+      for d in "${NPM_TESTED[@]}"; do case "$f" in "$d"/*) covered=1 ;; esac; done
+      [ $covered -eq 0 ] && LOOSE_TESTS+=("$f")
+    done < <(find "$ROOT" \( -type d \( "${PRUNE[@]}" \) -prune \) -o -type f -regextype posix-extended -regex '.*\.(test|spec)\.(ts|mts|js|mjs)$' -print0 | sort -z)
+    if [ ${#LOOSE_TESTS[@]} -gt 0 ]; then
+      step test typescript "$ROOT" -- node --import "$(tsx_loader)" --test "${LOOSE_TESTS[@]}"
+    fi
+  fi
+  if [ -n "${HAS[python]:-}" ]; then
+    if find "$ROOT" \( -type d \( "${PRUNE[@]}" \) -prune \) -o -type f \( -name 'test_*.py' -o -name '*_test.py' \) -print | grep -q .; then
+      step test python "$ROOT" -- python3 -m pytest -q -p no:cacheprovider
+    fi
+  fi
+  if [ -n "${HAS[go]:-}" ]; then
+    while IFS= read -r d; do
+      [ -z "$d" ] && continue
+      find "$d" -name '*_test.go' -not -path '*/vendor/*' | grep -q . && step test go "$d" -- go test ./...
+    done < <(dirs_with go.mod)
+  fi
+  if [ -n "${HAS[rust]:-}" ]; then
+    while IFS= read -r d; do [ -n "$d" ] && step test rust "$d" -- cargo test; done < <(dirs_with Cargo.toml)
+    while IFS= read -r -d '' f; do
+      has_manifest_ancestor "$f" Cargo.toml && continue
+      grep -q '#\[test\]' "$f" || continue
+      step test rust "$(dirname "$f")" -- sh -c 'rustc --edition 2021 --test -o "$1" "$2" && "$1"' _ "$TMP/rs-test" "$f"
+    done < <(files_with_ext rs)
+  fi
+  if [ -n "${HAS[zig]:-}" ]; then
+    while IFS= read -r d; do
+      [ -z "$d" ] && continue
+      grep -qE 'step\([[:space:]]*"test"' "$d/build.zig" && step test zig "$d" -- zig build test
+    done < <(dirs_with build.zig)
+    while IFS= read -r -d '' f; do
+      has_manifest_ancestor "$f" build.zig && continue
+      grep -qE '^[[:space:]]*test[[:space:]]+"' "$f" || continue
+      step test zig "$(dirname "$f")" -- zig test "$f" --cache-dir "$TMP/zig-cache"
+    done < <(files_with_ext zig)
+  fi
+  finish_stage test 5
+fi
+
+write_report ok 0
+exit 0

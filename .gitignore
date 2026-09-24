@@ -12,3 +12,8 @@ yarn.lock
 pnpm-lock.yaml
 *.lock
 *lock*
+
+# Codebox: rendered boxes and runner build output
+boxes/
+tools/codebox/runtime/runners/rs/target/
+tools/codebox/runtime/runners/ts/dist/

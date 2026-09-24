@@ -1,0 +1,837 @@
+{
+  "schema": "codebox.result/v1",
+  "request_id": "0839967e-d554-4207-8798-f9cec0376296",
+  "tool": "codebox_run",
+  "box": "poly",
+  "status": "ok",
+  "received_at": "2026-09-24T10:49:51.995Z",
+  "finished_at": "2026-09-24T10:49:55.291Z",
+  "duration_ms": 3296,
+  "channel": {
+    "received_via": "stdio",
+    "response_channel": "stdio",
+    "response_path": null,
+    "delivered": null,
+    "delivery_error": null
+  },
+  "files": {
+    "written": [],
+    "rejected": []
+  },
+  "index": null,
+  "setup": null,
+  "execution": {
+    "run_id": "20260924104951-69a202c4",
+    "entry": "py/main.py",
+    "language": "python",
+    "command": [
+      "docker",
+      "exec",
+      "-i",
+      "-w",
+      "/workspace/codes/py",
+      "-e",
+      "CODEBOX_RUN_ID=20260924104951-69a202c4",
+      "-e",
+      "CODEBOX_TELEMETRY_OUT=/workspace/runs/20260924104951-69a202c4/telemetry.json",
+      "-e",
+      "CODEBOX_TIMEOUT_MS=60000",
+      "codebox-poly",
+      "codebox-run",
+      "/workspace/codes/py/main.py"
+    ],
+    "exit_code": 0,
+    "signal": null,
+    "timed_out": false,
+    "wall_ms": 1788,
+    "stdout": "sum 8999995500000500000\n",
+    "stderr": "",
+    "stdout_bytes": 24,
+    "stderr_bytes": 0,
+    "stdout_truncated": false,
+    "stderr_truncated": false
+  },
+  "telemetry": {
+    "schema": "codebox.telemetry/v1",
+    "runner": {
+      "language": "python",
+      "name": "codebox-run-py",
+      "sdk": "opentelemetry-python",
+      "sdk_version": "1.44.0"
+    },
+    "run_id": "20260924104951-69a202c4",
+    "box": "poly",
+    "entry": "/workspace/codes/py/main.py",
+    "command": [
+      "/opt/codebox/venv/bin/python3",
+      "/workspace/codes/py/main.py"
+    ],
+    "compile": null,
+    "process": {
+      "pid": 981,
+      "exit_code": 0,
+      "signal": null,
+      "timed_out": false,
+      "spawn_error": null,
+      "started_at": "2026-09-24T10:49:52.236234+00:00",
+      "ended_at": "2026-09-24T10:49:53.756432+00:00",
+      "duration_ms": 1520.187475
+    },
+    "resources": {
+      "user_cpu_ms": 217.516,
+      "system_cpu_ms": 60.038999999999994,
+      "max_rss_kb": 126564,
+      "minor_page_faults": 30296,
+      "major_page_faults": 0,
+      "voluntary_ctx_switches": 2,
+      "involuntary_ctx_switches": 2,
+      "fs_in_blocks": 0,
+      "fs_out_blocks": 0,
+      "threads": null
+    },
+    "otel": {
+      "resource": {
+        "telemetry.sdk.language": "python",
+        "telemetry.sdk.name": "opentelemetry",
+        "telemetry.sdk.version": "1.44.0",
+        "service.instance.id": "304865c7-f74d-49fc-ba1c-f1912fed0b84",
+        "service.name": "codebox-poly",
+        "service.version": "1.0.0",
+        "codebox.box": "poly",
+        "codebox.run_id": "20260924104951-69a202c4",
+        "process.runtime.name": "cpython",
+        "process.runtime.version": "3.12.14",
+        "host.name": "vm"
+      },
+      "spans": [
+        {
+          "name": "process.exec",
+          "trace_id": "cc0cdb7f6a262d03fa4333c2efd72e3e",
+          "span_id": "d693be61b2461288",
+          "parent_span_id": "1436bc1f287d7439",
+          "kind": "CLIENT",
+          "start_time_unix_nano": "1790246992236453674",
+          "end_time_unix_nano": "1790246993756332337",
+          "duration_ms": 1519.878663,
+          "status": {
+            "code": "OK",
+            "message": null
+          },
+          "attributes": {
+            "process.command": "/opt/codebox/venv/bin/python3",
+            "process.command_args": [
+              "/opt/codebox/venv/bin/python3",
+              "/workspace/codes/py/main.py"
+            ],
+            "process.pid": 981,
+            "process.exit.code": 0
+          },
+          "events": []
+        },
+        {
+          "name": "codebox.run",
+          "trace_id": "cc0cdb7f6a262d03fa4333c2efd72e3e",
+          "span_id": "1436bc1f287d7439",
+          "parent_span_id": null,
+          "kind": "INTERNAL",
+          "start_time_unix_nano": "1790246992236355930",
+          "end_time_unix_nano": "1790246993756407746",
+          "duration_ms": 1520.051816,
+          "status": {
+            "code": "OK",
+            "message": null
+          },
+          "attributes": {
+            "code.filepath": "/workspace/codes/py/main.py",
+            "codebox.language": "python",
+            "process.exit.code": 0
+          },
+          "events": []
+        }
+      ],
+      "metrics": [
+        {
+          "name": "process.duration",
+          "unit": "ms",
+          "type": "HISTOGRAM",
+          "data_points": [
+            {
+              "attributes": {
+                "code.filepath": "/workspace/codes/py/main.py"
+              },
+              "value": {
+                "count": 1,
+                "sum": 1520.187475,
+                "min": 1520.187475,
+                "max": 1520.187475,
+                "buckets": {
+                  "boundaries": [
+                    0,
+                    5,
+                    10,
+                    25,
+                    50,
+                    75,
+                    100,
+                    250,
+                    500,
+                    750,
+                    1000,
+                    2500,
+                    5000,
+                    7500,
+                    10000
+                  ],
+                  "counts": [
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    1,
+                    0,
+                    0,
+                    0,
+                    0
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "process.cpu.time",
+          "unit": "ms",
+          "type": "SUM",
+          "data_points": [
+            {
+              "attributes": {
+                "code.filepath": "/workspace/codes/py/main.py",
+                "cpu.mode": "user"
+              },
+              "value": 217.516
+            },
+            {
+              "attributes": {
+                "code.filepath": "/workspace/codes/py/main.py",
+                "cpu.mode": "system"
+              },
+              "value": 60.038999999999994
+            }
+          ]
+        },
+        {
+          "name": "process.memory.max_rss",
+          "unit": "KiBy",
+          "type": "GAUGE",
+          "data_points": [
+            {
+              "attributes": {
+                "code.filepath": "/workspace/codes/py/main.py"
+              },
+              "value": 126564
+            }
+          ]
+        },
+        {
+          "name": "process.paging.faults",
+          "unit": "{fault}",
+          "type": "SUM",
+          "data_points": [
+            {
+              "attributes": {
+                "code.filepath": "/workspace/codes/py/main.py",
+                "process.paging.fault_type": "minor"
+              },
+              "value": 30296
+            },
+            {
+              "attributes": {
+                "code.filepath": "/workspace/codes/py/main.py",
+                "process.paging.fault_type": "major"
+              },
+              "value": 0
+            }
+          ]
+        },
+        {
+          "name": "process.context_switches",
+          "unit": "{count}",
+          "type": "SUM",
+          "data_points": [
+            {
+              "attributes": {
+                "code.filepath": "/workspace/codes/py/main.py",
+                "process.context_switch_type": "voluntary"
+              },
+              "value": 2
+            },
+            {
+              "attributes": {
+                "code.filepath": "/workspace/codes/py/main.py",
+                "process.context_switch_type": "involuntary"
+              },
+              "value": 2
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "metrics": {
+    "samples": {
+      "during": [
+        {
+          "label": "during-1",
+          "captured_at": "2026-09-24T10:49:52.502Z",
+          "ps": [
+            {
+              "pid": 981,
+              "ppid": 974,
+              "user": "root",
+              "cpu_percent": 66.6,
+              "mem_percent": 0.7,
+              "rss_kb": 126504,
+              "vsz_kb": 132400,
+              "threads": 1,
+              "elapsed_s": 0,
+              "state": "S",
+              "command": "python3"
+            },
+            {
+              "pid": 974,
+              "ppid": 0,
+              "user": "root",
+              "cpu_percent": 36.1,
+              "mem_percent": 0.1,
+              "rss_kb": 22152,
+              "vsz_kb": 98784,
+              "threads": 1,
+              "elapsed_s": 0,
+              "state": "Ss",
+              "command": "python3"
+            },
+            {
+              "pid": 982,
+              "ppid": 0,
+              "user": "root",
+              "cpu_percent": 9.5,
+              "mem_percent": 0,
+              "rss_kb": 3088,
+              "vsz_kb": 3940,
+              "threads": 1,
+              "elapsed_s": 0,
+              "state": "Ss",
+              "command": "bash"
+            }
+          ],
+          "top": {
+            "load_average": [
+              0.87,
+              1.03,
+              0.62
+            ],
+            "tasks": {
+              "total": 6,
+              "running": 1,
+              "sleeping": 5,
+              "stopped": 0,
+              "zombie": 0
+            },
+            "cpu_percent": {
+              "us": 0,
+              "sy": 0,
+              "ni": 0,
+              "id": 100,
+              "wa": 0,
+              "hi": 0,
+              "si": 0,
+              "st": 0
+            },
+            "memory": {
+              "unit": "MiB",
+              "total": 16095.7,
+              "free": 7907.8,
+              "used": 978.7,
+              "buff/cache": 7533.9
+            },
+            "swap": {
+              "unit": "MiB",
+              "total": 0,
+              "free": 0,
+              "used": 0,
+              "avail": 15117
+            },
+            "processes": [
+              {
+                "PID": "981",
+                "USER": "root",
+                "PR": "20",
+                "NI": "0",
+                "VIRT": "132400",
+                "RES": "126504",
+                "SHR": "5796",
+                "S": "S",
+                "%CPU": "53.3",
+                "%MEM": "0.8",
+                "TIME+": "0:00.18",
+                "COMMAND": "python3"
+              },
+              {
+                "PID": "1",
+                "USER": "root",
+                "PR": "20",
+                "NI": "0",
+                "VIRT": "1064",
+                "RES": "724",
+                "SHR": "676",
+                "S": "S",
+                "%CPU": "0.0",
+                "%MEM": "0.0",
+                "TIME+": "0:00.03",
+                "COMMAND": "docker-+"
+              },
+              {
+                "PID": "7",
+                "USER": "root",
+                "PR": "20",
+                "NI": "0",
+                "VIRT": "2500",
+                "RES": "1472",
+                "SHR": "1372",
+                "S": "S",
+                "%CPU": "0.0",
+                "%MEM": "0.0",
+                "TIME+": "0:00.00",
+                "COMMAND": "sleep"
+              }
+            ]
+          },
+          "top_raw": "top - 10:49:52 up 30 min,  0 user,  load average: 0.87, 1.03, 0.62\nTasks:   6 total,   1 running,   5 sleeping,   0 stopped,   0 zombie\n%Cpu(s):  0.0 us,  0.0 sy,  0.0 ni,100.0 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st \nMiB Mem :  16095.7 total,   7907.8 free,    978.7 used,   7533.9 buff/cache     \nMi",
+          "cgroup": {
+            "cgroup.version": 1,
+            "cpuacct.usage": 42309336464,
+            "cpuacct.stat": {
+              "user": 3575,
+              "system": 655
+            },
+            "cpu.stat": {
+              "nr_periods": 375,
+              "nr_throttled": 37,
+              "throttled_time": 3004793896,
+              "nr_bursts": 0,
+              "burst_time": 0
+            },
+            "memory.usage_in_bytes": 237256704,
+            "memory.max_usage_in_bytes": 435847168,
+            "memory.limit_in_bytes": 2147483648,
+            "memory.failcnt": 0,
+            "pids.current": 5,
+            "pids.max": 512
+          },
+          "loadavg": {
+            "1m": 0.87,
+            "5m": 1.03,
+            "15m": 0.62,
+            "running_total": "3/186"
+          },
+          "meminfo_kb": {
+            "MemTotal": 16481980,
+            "MemFree": 8032680,
+            "MemAvailable": 15414920,
+            "Buffers": 122060,
+            "Cached": 7056124,
+            "SwapTotal": 0,
+            "SwapFree": 0
+          },
+          "uptime_s": 1814.57
+        },
+        {
+          "label": "during-2",
+          "captured_at": "2026-09-24T10:49:53.766Z",
+          "ps": [
+            {
+              "pid": 974,
+              "ppid": 0,
+              "user": "root",
+              "cpu_percent": 10.9,
+              "mem_percent": 0.1,
+              "rss_kb": 22264,
+              "vsz_kb": 99808,
+              "threads": 1,
+              "elapsed_s": 1,
+              "state": "Rs",
+              "command": "python3"
+            },
+            {
+              "pid": 1001,
+              "ppid": 0,
+              "user": "root",
+              "cpu_percent": 9.5,
+              "mem_percent": 0,
+              "rss_kb": 3168,
+              "vsz_kb": 3940,
+              "threads": 1,
+              "elapsed_s": 0,
+              "state": "Ss",
+              "command": "bash"
+            },
+            {
+              "pid": 1,
+              "ppid": 0,
+              "user": "root",
+              "cpu_percent": 0,
+              "mem_percent": 0,
+              "rss_kb": 724,
+              "vsz_kb": 1064,
+              "threads": 1,
+              "elapsed_s": 82,
+              "state": "Ss",
+              "command": "docker-init"
+            }
+          ],
+          "top": {
+            "load_average": [
+              0.87,
+              1.03,
+              0.62
+            ],
+            "tasks": {
+              "total": 5,
+              "running": 2,
+              "sleeping": 3,
+              "stopped": 0,
+              "zombie": 0
+            },
+            "cpu_percent": {
+              "us": 0,
+              "sy": 0,
+              "ni": 0,
+              "id": 100,
+              "wa": 0,
+              "hi": 0,
+              "si": 0,
+              "st": 0
+            },
+            "memory": {
+              "unit": "MiB",
+              "total": 16095.7,
+              "free": 7848.1,
+              "used": 1038.4,
+              "buff/cache": 7534
+            },
+            "swap": {
+              "unit": "MiB",
+              "total": 0,
+              "free": 0,
+              "used": 0,
+              "avail": 15057.3
+            },
+            "processes": [
+              {
+                "PID": "1",
+                "USER": "root",
+                "PR": "20",
+                "NI": "0",
+                "VIRT": "1064",
+                "RES": "724",
+                "SHR": "676",
+                "S": "S",
+                "%CPU": "0.0",
+                "%MEM": "0.0",
+                "TIME+": "0:00.03",
+                "COMMAND": "docker-+"
+              },
+              {
+                "PID": "7",
+                "USER": "root",
+                "PR": "20",
+                "NI": "0",
+                "VIRT": "2500",
+                "RES": "1472",
+                "SHR": "1372",
+                "S": "S",
+                "%CPU": "0.0",
+                "%MEM": "0.0",
+                "TIME+": "0:00.00",
+                "COMMAND": "sleep"
+              },
+              {
+                "PID": "974",
+                "USER": "root",
+                "PR": "20",
+                "NI": "0",
+                "VIRT": "99808",
+                "RES": "22260",
+                "SHR": "7888",
+                "S": "R",
+                "%CPU": "0.0",
+                "%MEM": "0.1",
+                "TIME+": "0:00.17",
+                "COMMAND": "python3"
+              }
+            ]
+          },
+          "top_raw": "top - 10:49:53 up 30 min,  0 user,  load average: 0.87, 1.03, 0.62\nTasks:   5 total,   2 running,   3 sleeping,   0 stopped,   0 zombie\n%Cpu(s):  0.0 us,  0.0 sy,  0.0 ni,100.0 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st \nMiB Mem :  16095.7 total,   7848.1 free,   1038.4 used,   7534.0 buff/cache     \nMi",
+          "cgroup": {
+            "cgroup.version": 1,
+            "cpuacct.usage": 42477128600,
+            "cpuacct.stat": {
+              "user": 3589,
+              "system": 658
+            },
+            "cpu.stat": {
+              "nr_periods": 383,
+              "nr_throttled": 37,
+              "throttled_time": 3004793896,
+              "nr_bursts": 0,
+              "burst_time": 0
+            },
+            "memory.usage_in_bytes": 113647616,
+            "memory.max_usage_in_bytes": 435847168,
+            "memory.limit_in_bytes": 2147483648,
+            "memory.failcnt": 0,
+            "pids.current": 4,
+            "pids.max": 512
+          },
+          "loadavg": {
+            "1m": 0.87,
+            "5m": 1.03,
+            "15m": 0.62,
+            "running_total": "2/176"
+          },
+          "meminfo_kb": {
+            "MemTotal": 16481980,
+            "MemFree": 8036452,
+            "MemAvailable": 15418712,
+            "Buffers": 122060,
+            "Cached": 7056132,
+            "SwapTotal": 0,
+            "SwapFree": 0
+          },
+          "uptime_s": 1815.83
+        }
+      ],
+      "after": {
+        "label": "after",
+        "captured_at": "2026-09-24T10:49:54.032Z",
+        "ps": [
+          {
+            "pid": 1020,
+            "ppid": 0,
+            "user": "root",
+            "cpu_percent": 9.5,
+            "mem_percent": 0,
+            "rss_kb": 3088,
+            "vsz_kb": 3940,
+            "threads": 1,
+            "elapsed_s": 0,
+            "state": "Ss",
+            "command": "bash"
+          },
+          {
+            "pid": 1,
+            "ppid": 0,
+            "user": "root",
+            "cpu_percent": 0,
+            "mem_percent": 0,
+            "rss_kb": 724,
+            "vsz_kb": 1064,
+            "threads": 1,
+            "elapsed_s": 82,
+            "state": "Ss",
+            "command": "docker-init"
+          },
+          {
+            "pid": 7,
+            "ppid": 1,
+            "user": "root",
+            "cpu_percent": 0,
+            "mem_percent": 0,
+            "rss_kb": 1472,
+            "vsz_kb": 2500,
+            "threads": 1,
+            "elapsed_s": 82,
+            "state": "S",
+            "command": "sleep"
+          }
+        ],
+        "top": {
+          "load_average": [
+            0.87,
+            1.03,
+            0.62
+          ],
+          "tasks": {
+            "total": 4,
+            "running": 1,
+            "sleeping": 3,
+            "stopped": 0,
+            "zombie": 0
+          },
+          "cpu_percent": {
+            "us": 0,
+            "sy": 0,
+            "ni": 0,
+            "id": 100,
+            "wa": 0,
+            "hi": 0,
+            "si": 0,
+            "st": 0
+          },
+          "memory": {
+            "unit": "MiB",
+            "total": 16095.7,
+            "free": 7867.8,
+            "used": 1018.6,
+            "buff/cache": 7534
+          },
+          "swap": {
+            "unit": "MiB",
+            "total": 0,
+            "free": 0,
+            "used": 0,
+            "avail": 15077.1
+          },
+          "processes": [
+            {
+              "PID": "1",
+              "USER": "root",
+              "PR": "20",
+              "NI": "0",
+              "VIRT": "1064",
+              "RES": "724",
+              "SHR": "676",
+              "S": "S",
+              "%CPU": "0.0",
+              "%MEM": "0.0",
+              "TIME+": "0:00.03",
+              "COMMAND": "docker-+"
+            },
+            {
+              "PID": "7",
+              "USER": "root",
+              "PR": "20",
+              "NI": "0",
+              "VIRT": "2500",
+              "RES": "1472",
+              "SHR": "1372",
+              "S": "S",
+              "%CPU": "0.0",
+              "%MEM": "0.0",
+              "TIME+": "0:00.00",
+              "COMMAND": "sleep"
+            },
+            {
+              "PID": "1020",
+              "USER": "root",
+              "PR": "20",
+              "NI": "0",
+              "VIRT": "3940",
+              "RES": "3088",
+              "SHR": "2804",
+              "S": "S",
+              "%CPU": "0.0",
+              "%MEM": "0.0",
+              "TIME+": "0:00.02",
+              "COMMAND": "bash"
+            }
+          ]
+        },
+        "top_raw": "top - 10:49:54 up 30 min,  0 user,  load average: 0.87, 1.03, 0.62\nTasks:   4 total,   1 running,   3 sleeping,   0 stopped,   0 zombie\n%Cpu(s):  0.0 us,  0.0 sy,  0.0 ni,100.0 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st \nMiB Mem :  16095.7 total,   7867.8 free,   1018.6 used,   7534.0 buff/cache     \nMi",
+        "cgroup": {
+          "cgroup.version": 1,
+          "cpuacct.usage": 42548780173,
+          "cpuacct.stat": {
+            "user": 3593,
+            "system": 661
+          },
+          "cpu.stat": {
+            "nr_periods": 386,
+            "nr_throttled": 37,
+            "throttled_time": 3004793896,
+            "nr_bursts": 0,
+            "burst_time": 0
+          },
+          "memory.usage_in_bytes": 98889728,
+          "memory.max_usage_in_bytes": 435847168,
+          "memory.limit_in_bytes": 2147483648,
+          "memory.failcnt": 0,
+          "pids.current": 3,
+          "pids.max": 512
+        },
+        "loadavg": {
+          "1m": 0.87,
+          "5m": 1.03,
+          "15m": 0.62,
+          "running_total": "1/174"
+        },
+        "meminfo_kb": {
+          "MemTotal": 16481980,
+          "MemFree": 8056608,
+          "MemAvailable": 15438828,
+          "Buffers": 122060,
+          "Cached": 7056140,
+          "SwapTotal": 0,
+          "SwapFree": 0
+        },
+        "uptime_s": 1816.1
+      }
+    },
+    "docker_stats": {
+      "during": {
+        "BlockIO": "0B / 0B",
+        "CPUPerc": "21.17%",
+        "Container": "codebox-poly",
+        "ID": "772b3733feee",
+        "MemPerc": "9.30%",
+        "MemUsage": "190.5MiB / 2GiB",
+        "Name": "codebox-poly",
+        "NetIO": "0B / 0B",
+        "PIDs": "4"
+      },
+      "after": {
+        "BlockIO": "0B / 0B",
+        "CPUPerc": "0.01%",
+        "Container": "codebox-poly",
+        "ID": "772b3733feee",
+        "MemPerc": "2.84%",
+        "MemUsage": "58.08MiB / 2GiB",
+        "Name": "codebox-poly",
+        "NetIO": "0B / 0B",
+        "PIDs": "2"
+      }
+    },
+    "host": {
+      "hostname": "vm",
+      "platform": "linux 6.18.44-fc-v37",
+      "cpus": 4,
+      "loadavg": [
+        0.8,
+        1.01,
+        0.62
+      ],
+      "memory": {
+        "total_bytes": 16877547520,
+        "free_bytes": 15826407424
+      },
+      "server_process": {
+        "pid": 16946,
+        "rss_bytes": 72749056,
+        "uptime_s": 3.465146854
+      }
+    }
+  },
+  "logs": {
+    "monitoramento": "boxes/poly/logs/monitoramento.log",
+    "top_snapshot": "boxes/poly/logs/top_snapshot.log",
+    "run_dir": "boxes/poly/runs/20260924104951-69a202c4"
+  },
+  "errors": []
+}

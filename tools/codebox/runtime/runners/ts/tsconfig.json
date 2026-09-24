@@ -4,10 +4,9 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "strict": true,
-    "noEmit": true,
-    "allowImportingTsExtensions": true,
     "skipLibCheck": true,
-    "types": ["node"]
+    "types": ["node"],
+    "outDir": "dist"
   },
-  "include": ["src/**/*.ts", "test/**/*.ts"]
+  "files": ["telemetry.ts"]
 }

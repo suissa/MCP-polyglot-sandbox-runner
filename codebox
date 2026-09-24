@@ -1,0 +1,123 @@
+#!/usr/bin/env bash
+# codebox — polyglot sandbox boxes defined in configs/codebox.yml.
+#
+#   ./codebox up <alias> [--force] [--setup] [--no-build]
+#       reads the config, renders boxes/<alias>/{Dockerfile,docker-compose.yml,
+#       config.yml,.env,codes/} and runs `docker compose up -d` in that folder
+#   ./codebox render <alias> [--force]     only render the files
+#   ./codebox down <alias>                 docker compose down
+#   ./codebox setup <alias> [setup args]   preflight → install → build → test
+#   ./codebox run <alias> <file> [args]    run a file through its telemetry runner
+#   ./codebox metrics <alias>              ps/top snapshot (monitoramento.log, top_snapshot.log)
+#   ./codebox ps <alias>                   docker compose ps
+#   ./codebox ls                           boxes declared in the config
+#
+# Global: -c|--config <file> (default configs/codebox.yml, or $CODEBOX_CONFIG)
+set -euo pipefail
+
+REPO_ROOT="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
+CONFIG="${CODEBOX_CONFIG:-$REPO_ROOT/configs/codebox.yml}"
+BOXES_DIR="${CODEBOX_BOXES_DIR:-$REPO_ROOT/boxes}"
+
+die() { echo "codebox: $*" >&2; exit 1; }
+usage() { sed -n '2,16p' "$0" | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
+
+ARGS=()
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -c|--config) CONFIG="$2"; shift 2 ;;
+    -h|--help) usage 0 ;;
+    *) ARGS+=("$1"); shift ;;
+  esac
+done
+set -- "${ARGS[@]+"${ARGS[@]}"}"
+[ $# -ge 1 ] || usage 64
+CMD="$1"; shift
+export CODEBOX_CONFIG="$CONFIG" CODEBOX_BOXES_DIR="$BOXES_DIR"
+
+command -v node >/dev/null 2>&1 || die "node is required to read $CONFIG"
+[ -d "$REPO_ROOT/node_modules/yaml" ] || die "run 'npm install' in $REPO_ROOT first"
+
+compose() { # compose <alias> args...
+  local dir="$BOXES_DIR/$1"; shift
+  [ -f "$dir/docker-compose.yml" ] || die "box not rendered: $dir (run ./codebox up)"
+  docker compose --project-directory "$dir" -f "$dir/docker-compose.yml" "$@"
+}
+
+container() { echo "codebox-$1"; }
+
+require_alias() { [ -n "${1:-}" ] || die "missing <alias>"; }
+
+detect_runtime() {
+  if docker info --format '{{json .Runtimes}}' 2>/dev/null | grep -q '"runsc"'; then echo runsc; else echo runc; fi
+}
+
+render() { # render <alias> [--force]
+  local alias="$1"; shift
+  node "$REPO_ROOT/tools/codebox/render.mjs" "$alias" --config "$CONFIG" --root "$BOXES_DIR" --runtime "$(detect_runtime)" "$@"
+}
+
+case "$CMD" in
+  up)
+    require_alias "${1:-}"; alias="$1"; shift
+    force=(); build=1; setup=0
+    for a in "$@"; do
+      case "$a" in
+        --force) force=(--force) ;;
+        --no-build) build=0 ;;
+        --setup) setup=1 ;;
+        *) die "unknown option for up: $a" ;;
+      esac
+    done
+    command -v docker >/dev/null 2>&1 || die "docker not found"
+    summary="$(render "$alias" "${force[@]+"${force[@]}"}")"
+    echo "codebox: rendered $BOXES_DIR/$alias"
+    echo "  $summary"
+    if [ $build -eq 1 ]; then compose "$alias" build; fi
+    compose "$alias" up -d
+    compose "$alias" ps
+    if [ $setup -eq 1 ]; then docker exec "$(container "$alias")" setup /workspace/codes; fi
+    ;;
+  render)
+    require_alias "${1:-}"; render "$@"
+    ;;
+  down)
+    require_alias "${1:-}"; compose "$1" down
+    ;;
+  ps)
+    require_alias "${1:-}"; compose "$1" ps
+    ;;
+  setup)
+    require_alias "${1:-}"; alias="$1"; shift
+    docker exec "$(container "$alias")" setup /workspace/codes "$@"
+    ;;
+  run)
+    require_alias "${1:-}"; alias="$1"; shift
+    [ $# -ge 1 ] || die "usage: codebox run <alias> <file> [args...]"
+    file="$1"; shift
+    run_id="cli-$(date +%Y%m%d%H%M%S)-$$"
+    code=0
+    docker exec -i -w /workspace/codes \
+      -e CODEBOX_RUN_ID="$run_id" \
+      -e CODEBOX_TELEMETRY_OUT="/workspace/runs/$run_id/telemetry.json" \
+      "$(container "$alias")" codebox-run "/workspace/codes/${file#/workspace/codes/}" "$@" || code=$?
+    echo "codebox: telemetry → $BOXES_DIR/$alias/runs/$run_id/telemetry.json" >&2
+    exit $code
+    ;;
+  metrics)
+    require_alias "${1:-}"
+    docker exec "$(container "$1")" codebox-metrics cli
+    ;;
+  ls)
+    node --input-type=module -e "
+      import { loadCodeboxConfig, resolveBox } from '$REPO_ROOT/tools/codebox/lib/boxes.mjs';
+      const cfg = loadCodeboxConfig(process.argv[1]);
+      for (const alias of Object.keys(cfg.boxes)) {
+        try { const b = resolveBox(cfg, alias); console.log(alias.padEnd(20), b.languages.join(','), '(' + b.init.length + ' init)'); }
+        catch (e) { console.log(alias.padEnd(20), 'INVALID:', e.message.split('\n').slice(1).join(' ')); }
+      }" "$CONFIG"
+    ;;
+  *)
+    usage 64
+    ;;
+esac

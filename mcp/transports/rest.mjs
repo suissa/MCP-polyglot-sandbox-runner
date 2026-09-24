@@ -38,7 +38,7 @@ export function restTransport({ host, port, moduleId, maxBodyBytes = 256 * 1024 
       } catch (cause) {
         return json(res, 400, { jsonrpc: '2.0', id: null, error: { code: -32700, message: cause.message } });
       }
-      const response = await dispatch(request);
+      const response = await dispatch(request, { transport: 'rest' });
       json(res, 200, response ?? { jsonrpc: '2.0', id: request?.id ?? null, result: null });
     });
   }

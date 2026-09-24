@@ -1,0 +1,93 @@
+# Codebox boxes — `./codebox up <alias>` renders boxes/<alias>/ from here:
+#   Dockerfile, docker-compose.yml, config.yml, .env and codes/ (init codes)
+# and then runs `docker compose up -d` in that folder.
+#
+# Supported languages: typescript (ts), python (py), go, rust (rs), zig.
+# Every box must declare at least one language and at least one init code.
+
+defaults:
+  # auto = gVisor (runsc) when the Docker daemon has it, otherwise runc.
+  runtime: auto
+  # Compose network_mode for the container (bridge | host | none).
+  # `setup` needs network to install packages.
+  network: bridge
+  # inherit = pass HTTP(S)_PROXY / NO_PROXY from the shell to build + container.
+  proxy: none
+  resources:
+    cpus: "2.0"
+    memory: 2g
+    pids: 512
+  timeout_ms: 60000
+  images:
+    base: buildpack-deps:bookworm
+    node: node:22-bookworm-slim
+    python: python:3.12-slim-bookworm
+    go: golang:1.26-bookworm
+    rust: rust:1-bookworm
+  zig_version: 0.16.0
+
+boxes:
+  # Every language at once.
+  poly:
+    languages: [typescript, python, go, rust, zig]
+    env:
+      APP_ENV: sandbox
+    init:
+      - path: ts/main.ts
+        content: |
+          const fib = (n: number): number => (n < 2 ? n : fib(n - 1) + fib(n - 2));
+          console.log(`ts fib(25) = ${fib(25)}`);
+      - path: py/main.py
+        content: |
+          def fib(n: int) -> int:
+              return n if n < 2 else fib(n - 1) + fib(n - 2)
+
+          print(f"py fib(25) = {fib(25)}")
+      - path: go/main.go
+        content: |
+          package main
+
+          import "fmt"
+
+          func fib(n int) int {
+          	if n < 2 {
+          		return n
+          	}
+          	return fib(n-1) + fib(n-2)
+          }
+
+          func main() { fmt.Printf("go fib(25) = %d\n", fib(25)) }
+      - path: rs/main.rs
+        content: |
+          fn fib(n: u64) -> u64 {
+              if n < 2 { n } else { fib(n - 1) + fib(n - 2) }
+          }
+
+          fn main() {
+              println!("rs fib(25) = {}", fib(25));
+          }
+      - path: zig/main.zig
+        content: |
+          const std = @import("std");
+
+          fn fib(n: u64) u64 {
+              return if (n < 2) n else fib(n - 1) + fib(n - 2);
+          }
+
+          pub fn main() void {
+              std.debug.print("zig fib(25) = {d}\n", .{fib(25)});
+          }
+
+  # A single-language box.
+  py:
+    languages: [python]
+    resources:
+      memory: 512m
+    init:
+      - path: main.py
+        content: |
+          import platform
+          print("hello from", platform.python_version())
+      - path: requirements.txt
+        content: |
+          # packages installed by `setup`
